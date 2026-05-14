@@ -4,9 +4,11 @@ import org.example.api.AccountApi;
 import org.example.model.AccountFavoritesPostRequest;
 import org.example.model.Book;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@RestController
 public class AccountApiImpl implements AccountApi {
 
     @Override

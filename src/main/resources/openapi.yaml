@@ -10,17 +10,49 @@ servers:
 
 paths:
 
-  /books/new:
+  /books:
     get:
       tags:
         - books
 
-      summary: Получить список новых книг
+      summary: Получить книги
+      operationId: getBooks
+      parameters:
+        - in: query
+          name: id
+          description: Параметр принимает id книги для поиска
+          schema:
+            type: integer
+        - in: query
+          name: authorId
+          description: Параметр примнимает id автора для поиска
+          schema:
+            type: integer
+        - in: query
+          name: seriesId
+          description: Параметр принимает id серии книги для поиска
+          schema:
+            type: integer
+        - in: query
+          name: publisherId
+          description: Параметр принимает id издателя для поиска
+          schema:
+            type: integer
+        - in: query
+          name: genre
+          description: Параметр принимает жанр для поиска
+          schema:
+            type: string
+        - in: query
+          name: limit
+          description: Параметр указывает лимит вывода
+          schema:
+            type: integer
+            default: 10
 
       responses:
         '200':
-          description: Список новых книг
-
+          description: Список книг
           content:
             application/json:
               schema:
@@ -41,7 +73,35 @@ paths:
       tags:
         - books
 
-      summary: Получить список популярных книг
+      summary: Получить список популярных/новых книг
+      operationId: getBooksPopular
+      parameters:
+        - in: query
+          name: authorId
+          description: Параметр указывает id для поиска по автору
+          schema:
+            type: integer
+        - in: query
+          name: publisher
+          description: Параметр указывает издателя по поиска
+          schema:
+            type: string
+        - in: query
+          name: isPopular
+          description: Параметр указывает значение популярности (популярно/непопулярно) для поиска
+          schema:
+            type: boolean
+        - in: query
+          name: isNew
+          description: Параметр указывает значение новизны (новое/неновое)
+          schema:
+            type: boolean
+        - in: query
+          name: limit
+          description: Параметр указывает лимит вывода
+          schema:
+            type: integer
+            default: 10
 
       responses:
         '200':
@@ -67,7 +127,8 @@ paths:
         - authors
 
       summary: Поиск популярных авторов
-
+      description: Поиск популярных авторов
+      operationId: getAuthorsPopular
       responses:
         '200':
           description: OK
@@ -85,45 +146,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-
-  /books/genre/{genre}:
-    get:
-      tags:
-        - books
-      parameters:
-        - name: genre
-          in: path
-          required: true
-          schema:
-            type: string
-
-      summary: Поиск по жанру
-
-      responses:
-        '200':
-          description: OK
-
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Book'
-
-        '400':
-          description: Неверный запрос
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-
   /account/purchased-books:
     get:
       tags:
         - account
 
       summary: Список приобретенных книг
+      description: Получение списка приобретенных книг
+      operationId: getPurchasedBooks
 
       security:
         - sessionAuth: []
@@ -147,12 +177,14 @@ paths:
 
 
 
-  /account/favorites:
+  /account/favorite:
     post:
       tags:
         - account
 
       summary: Добавить книгу в избранное
+      description: Добавление книги в избранное
+      operationId: getFavoriteBooks
       requestBody:
         required: true
         content:
@@ -183,6 +215,8 @@ paths:
         - account
 
       summary: Корзина с книгами
+      description: Получение корзины с книгами
+      operationId: getBasket
 
       responses:
         '200':
@@ -202,17 +236,48 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+
+  /account/into/basket:
+    post:
+      tags:
+        - account
+
+      summary: Добавить книгу в корзину
+      description: Добавление одной книги в корзину
+      operationId: postIntoBasket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bookId:
+                  type: integer
+      responses:
+        '201':
+          description: Книга добавлена в корзину
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '400':
+          description: Неожиданная ошибка при добавлении в избранное
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /payment/pay:
     post:
       tags:
         - payment
 
       summary: Оплата товаров в корзине
-
+      description: Произведение оплаты корзины
+      operationId: postPaymentPay
       security:
         - sessionAuth: []
-
-      description: Оплата корзины
 
       requestBody:
         required: true
@@ -245,22 +310,23 @@ paths:
         - payment
 
       summary: Возврат оплаты за книгу
-
+      description: Возврат денежных средств, внесенных в качестве оплаты
+      operationId: refundPay
       security:
         - sessionAuth: []
-
-      description: Возврат денежных средств, внесенных в качестве оплаты
 
       parameters:
         - name: orderId
           in: path
           required: true
+          description: Параметр для осуществления возврата денежных средств по определенному id заказа
           schema:
             type: integer
 
         - name: bookId
           in: path
           required: true
+          description: Параметр для осуществления возврата денежных средств по определенному id книги
           schema:
             type: integer
 
@@ -281,18 +347,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /payment/basket/{bookId}:
+  /account/basket/{bookId}:
     delete:
       tags:
-        - payment
-      summary: Удаление товаров в корзине
-
-      description: Удаление товаров в корзине
+        - account
+      summary: Удаление товара из корзины
+      description: Удаление товара из корзины по его id
+      operationId: deleteBookById
 
       parameters:
         - name: bookId
           in: path
           required: true
+          description: Параметр id книги для удаления
           schema:
             type: integer
 
@@ -312,18 +379,20 @@ paths:
         - authors
 
       summary: Информация об авторе
+      description: Получение информации об авторе книг
+      operationId: getAuthorById
 
       parameters:
         - name: authorId
           in: path
           required: true
+          description: Параметр для идентификации по id для поиска информации об авторе
           schema:
             type: integer
 
       responses:
         '200':
-          description: Автор
-
+          description: Вывод автора
           content:
             application/json:
               schema:
@@ -336,107 +405,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-
-
-  /authors/books/{authorId}:
-    get:
-      tags:
-        - authors
-
-      summary: Все книги автора
-
-      parameters:
-        - name: authorId
-          in: path
-          required: true
-          schema:
-            type: integer
-
-      responses:
-        '200':
-          description: Список книг автора
-
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Book'
-        '400':
-          description: Неожиданная ошибка при выводе списока книг автора
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /authors/new/{authorId}:
-    get:
-      tags:
-        - authors
-
-      summary: Список новых книг автора
-
-      parameters:
-        - name: authorId
-          in: path
-          required: true
-          schema:
-            type: integer
-
-      responses:
-        '200':
-          description: Список новых книг автора
-
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Book'
-        '400':
-          description: Неожиданная ошибка при выводе списка новых книг автора
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  /authors/popular/{authorId}:
-    get:
-      tags:
-        - authors
-
-      summary: Список популярных книг автора
-
-      parameters:
-        - name: authorId
-          in: path
-          required: true
-          schema:
-            type: integer
-
-      responses:
-        '200':
-          description: Список популярных книг автора
-
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Book'
-        '400':
-          description: Неожиданная ошибка при выводе списка популярных книг автора
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
   /auth/register:
     post:
       tags:
         - auth
 
       summary: Регистрация пользователя
+      description: Осуществление регистрации пользователя
+      operationId: postRegister
 
       requestBody:
         required: true
@@ -473,6 +449,8 @@ paths:
         - auth
 
       summary: Ввод данных пользователя
+      description: Ввод данных пользователя для осуществления входа в профиль
+      operationId: postLogin
 
       requestBody:
         required: true
@@ -517,6 +495,8 @@ paths:
         - auth
 
       summary: Выход из профиля
+      description: Осуществление выхода из профиля
+      operationId: postLogout
 
       security:
         - sessionAuth: []
@@ -553,14 +533,37 @@ components:
           type: string
 
         author:
-          type: string
+          $ref: '#/components/schemas/Author'
 
         genre:
-          type: string
+          $ref: '#/components/schemas/Genre'
 
         price:
           type: number
           format: double
+          description: Информация цены
+
+        publisher:
+          type: string
+          description: Информация об издателе
+
+        ISBN:
+          type: string
+
+        series:
+          type: string
+
+        release:
+          type: string
+
+        description:
+          type: string
+
+        pages:
+          type: string
+
+        wight:
+          type: integer
 
     Author:
       type: object
@@ -575,6 +578,12 @@ components:
         surname:
           type: string
 
+        middleName:
+          type: string
+
+        pseudonym:
+          type: string
+
     Genre:
       type: object
 
@@ -584,6 +593,14 @@ components:
 
         name:
           type: string
+          enum:
+            - HORROR
+            - COMEDY
+            - ROMANTIC
+            - DRAMA
+            - THRILLER
+
+
 
     Basket:
       type: object
@@ -598,17 +615,47 @@ components:
           type: number
           format: double
 
+        quantityBooks:
+          type: integer
+
+        createdAt:
+          type: string
+          format: date-time
+
+        updatedAt:
+          type: string
+          format: date-time
+
     PaymentResponse:
       type: object
 
       properties:
         orderId:
           type: integer
+
         sumOfPay:
           type: number
           format: double
+
         status:
           type: string
+          enum:
+            - CREATED
+            - PENDING
+            - PAID
+            - FAILED
+            - CANCELLED
+
+        createdAt:
+          type: string
+          format: date-time
+
+        message:
+          type: string
+
+        receiptUrl:
+          type: string
+          format: uri
 
     PaymentRequest:
       type: object
@@ -617,6 +664,22 @@ components:
         basket:
           $ref: '#/components/schemas/Basket'
 
+        paymentMethod:
+          type: string
+          enum:
+            - CARD
+            - SBP
+            - PAYPAL
+
+        deliveryAddress:
+          type: string
+
+        recipientName:
+          type: string
+
+        recipientPhone:
+          type: string
+
     RefundResponse:
       type: object
 
@@ -624,6 +687,31 @@ components:
         refund_amount:
           type: number
           format: double
+
+        refundId:
+          type: integer
+
+        orderId:
+          type: integer
+
+        paymentId:
+          type: string
+
+        status:
+          type: string
+          enum:
+            - PENDING
+            - APPROVED
+            - REJECTED
+            - COMPLETED
+
+        reason:
+          type: string
+
+        createdAt:
+          type: string
+          format: date-time
+
 
     Error:
       type: object

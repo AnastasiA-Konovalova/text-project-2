@@ -5,7 +5,9 @@ import org.example.model.PaymentRequest;
 import org.example.model.PaymentResponse;
 import org.example.model.RefundResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RestController;
 
+@RestController
 public class PaymentApiImpl implements PaymentApi {
 
     @Override
