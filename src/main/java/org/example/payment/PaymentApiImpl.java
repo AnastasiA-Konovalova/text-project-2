@@ -24,5 +24,4 @@ public class PaymentApiImpl implements PaymentApi {
     public ResponseEntity<Void> paymentBasketBookIdDelete(Integer bookId) {
         return ResponseEntity.ok().build();
     }
-
 }
