@@ -1,0 +1,633 @@
+openapi: 3.0.4
+
+info:
+  title: Book store
+  description: Книжный магазин
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api
+
+paths:
+
+  /books/new:
+    get:
+      tags:
+        - books
+
+      summary: Получить список новых книг
+
+      responses:
+        '200':
+          description: Список новых книг
+
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+
+
+        '400':
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /books/popular:
+    get:
+      tags:
+        - books
+
+      summary: Получить список популярных книг
+
+      responses:
+        '200':
+          description: Список популярных книг
+
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+
+        '400':
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /books/authors/popular:
+    get:
+      tags:
+        - authors
+
+      summary: Поиск популярных авторов
+
+      responses:
+        '200':
+          description: OK
+
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Author'
+        '400':
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
+  /books/genre/{genre}:
+    get:
+      tags:
+        - books
+      parameters:
+        - name: genre
+          in: path
+          required: true
+          schema:
+            type: string
+
+      summary: Поиск по жанру
+
+      responses:
+        '200':
+          description: OK
+
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+
+        '400':
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
+  /account/purchased-books:
+    get:
+      tags:
+        - account
+
+      summary: Список приобретенных книг
+
+      security:
+        - sessionAuth: []
+
+      responses:
+        '200':
+          description: Список купленных книг
+
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+        '400':
+          description: Неожиданная ошибка при покупке книг
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+
+
+  /account/favorites:
+    post:
+      tags:
+        - account
+
+      summary: Добавить книгу в избранное
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bookId:
+                  type: integer
+      responses:
+        '201':
+          description: Книга добавлена в избранное
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '400':
+          description: Неожиданная ошибка при добавлении в избранное
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+
+  /account/basket:
+    get:
+      tags:
+        - account
+
+      summary: Корзина с книгами
+
+      responses:
+        '200':
+          description: Список книг в корзине
+
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+
+        '400':
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /payment/pay:
+    post:
+      tags:
+        - payment
+
+      summary: Оплата товаров в корзине
+
+      security:
+        - sessionAuth: []
+
+      description: Оплата корзины
+
+      requestBody:
+        required: true
+
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+
+      responses:
+        '200':
+          description: Корзина оплачена
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+
+        '400':
+          description: Ошибка оплаты корзины
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /payment/refund/{orderId}/{bookId}:
+    post:
+      tags:
+        - payment
+
+      summary: Возврат оплаты за книгу
+
+      security:
+        - sessionAuth: []
+
+      description: Возврат денежных средств, внесенных в качестве оплаты
+
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: Оплата отменена
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundResponse'
+
+        '400':
+          description: Ошибка отмены оплаты
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /payment/basket/{bookId}:
+    delete:
+      tags:
+        - payment
+      summary: Удаление товаров в корзине
+
+      description: Удаление товаров в корзине
+
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: Товар удален
+        '400':
+          description: Ошибка при удалении товара
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /authors/{authorId}:
+    get:
+      tags:
+        - authors
+
+      summary: Информация об авторе
+
+      parameters:
+        - name: authorId
+          in: path
+          required: true
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: Автор
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Author'
+
+        '400':
+          description: Неожиданная ошибка при выводе информации об авторе
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+
+
+  /authors/books/{authorId}:
+    get:
+      tags:
+        - authors
+
+      summary: Все книги автора
+
+      parameters:
+        - name: authorId
+          in: path
+          required: true
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: Список книг автора
+
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+        '400':
+          description: Неожиданная ошибка при выводе списока книг автора
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /authors/new/{authorId}:
+    get:
+      tags:
+        - authors
+
+      summary: Список новых книг автора
+
+      parameters:
+        - name: authorId
+          in: path
+          required: true
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: Список новых книг автора
+
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+        '400':
+          description: Неожиданная ошибка при выводе списка новых книг автора
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /authors/popular/{authorId}:
+    get:
+      tags:
+        - authors
+
+      summary: Список популярных книг автора
+
+      parameters:
+        - name: authorId
+          in: path
+          required: true
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: Список популярных книг автора
+
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+        '400':
+          description: Неожиданная ошибка при выводе списка популярных книг автора
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/register:
+    post:
+      tags:
+        - auth
+
+      summary: Регистрация пользователя
+
+      requestBody:
+        required: true
+
+        content:
+          application/json:
+            schema:
+              type: object
+
+              required:
+                - email
+                - password
+
+              properties:
+                email:
+                  type: string
+
+                password:
+                  type: string
+
+      responses:
+        '200':
+          description: Пользователь зарегистрирован
+        '400':
+          description: Регистрация не пройдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags:
+        - auth
+
+      summary: Ввод данных пользователя
+
+      requestBody:
+        required: true
+
+        content:
+          application/json:
+            schema:
+              type: object
+
+              required:
+                - email
+                - password
+
+              properties:
+                email:
+                  type: string
+
+                password:
+                  type: string
+
+      responses:
+        '200':
+          description: Вход выполнен успешно
+
+          headers:
+            Set-Cookie:
+              description: Сессионный cookie
+              schema:
+                type: string
+
+        '400':
+          description: Вход не выполнен
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    post:
+      tags:
+        - auth
+
+      summary: Выход из профиля
+
+      security:
+        - sessionAuth: []
+
+      responses:
+        '200':
+          description: Сессия удалена (JSESSIONID)
+
+        '400':
+          description: Выход не выполнен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: JSESSIONID
+
+  schemas:
+
+    Book:
+      type: object
+
+      properties:
+        id:
+          type: integer
+
+        title:
+          type: string
+
+        author:
+          type: string
+
+        genre:
+          type: string
+
+        price:
+          type: number
+          format: double
+
+    Author:
+      type: object
+
+      properties:
+        id:
+          type: integer
+
+        name:
+          type: string
+
+        surname:
+          type: string
+
+    Genre:
+      type: object
+
+      properties:
+        id:
+          type: integer
+
+        name:
+          type: string
+
+    Basket:
+      type: object
+
+      properties:
+        books:
+          type: array
+          items:
+            $ref: '#/components/schemas/Book'
+
+        totalPrice:
+          type: number
+          format: double
+
+    PaymentResponse:
+      type: object
+
+      properties:
+        orderId:
+          type: integer
+        sumOfPay:
+          type: number
+          format: double
+        status:
+          type: string
+
+    PaymentRequest:
+      type: object
+
+      properties:
+        basket:
+          $ref: '#/components/schemas/Basket'
+
+    RefundResponse:
+      type: object
+
+      properties:
+        refund_amount:
+          type: number
+          format: double
+
+    Error:
+      type: object
+
+      properties:
+        message:
+          type: string
