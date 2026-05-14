@@ -1,20 +1,26 @@
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.2.5'
-    id 'io.spring.dependency-management' version '1.1.4'
+    //id 'io.spring.dependency-management' version '1.1.4'
     id "org.openapi.generator" version "7.22.0"
 }
 
-group = 'org.example'
-version = '1.0-SNAPSHOT'
 
-repositories {
-    mavenCentral()
+allprojects {
+    group = 'org.example'
+    version = '1.0-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
 }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
-
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
     implementation 'io.swagger.core.v3:swagger-annotations:2.2.21'
@@ -34,7 +40,7 @@ test {
 openApiGenerate {
     generatorName = "spring"
 
-    inputSpec = "${rootDir}/src/main/resources/openapi.yaml"
+    inputSpec = "${rootDir}/schemas/openapi.yaml"
     outputDir = "${buildDir}/generated"
 
     apiPackage = "org.example.api"
@@ -43,7 +49,9 @@ openApiGenerate {
     configOptions = [
             interfaceOnly: "true",
             useSpringBoot3: "true",
-            dateLibrary: "java8"
+            dateLibrary: "java8",
+            skipDefaultInterface: 'true',
+            useTags: 'true'
     ]
 }
 

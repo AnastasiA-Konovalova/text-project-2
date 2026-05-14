@@ -1,7 +1,6 @@
 package org.example.auth;
 
 import org.example.api.AuthApi;
-import org.example.model.AuthRegisterPostRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
