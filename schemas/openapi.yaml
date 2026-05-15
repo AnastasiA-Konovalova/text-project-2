@@ -156,7 +156,7 @@ paths:
       operationId: getPurchasedBooks
 
       security:
-        - sessionAuth: []
+        - bearerAuth: []
 
       responses:
         '200':
@@ -277,7 +277,7 @@ paths:
       description: Произведение оплаты корзины
       operationId: postPaymentPay
       security:
-        - sessionAuth: []
+        - bearerAuth: []
 
       requestBody:
         required: true
@@ -304,43 +304,36 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /payment/refund/{orderId}/{bookId}:
+  /payment/refund:
     post:
       tags:
         - payment
 
-      summary: Возврат оплаты за книгу
-      description: Возврат денежных средств, внесенных в качестве оплаты
-      operationId: refundPay
+      summary: Возврат оплаты за книги
+      operationId: refundPayBooksById
+
       security:
-        - sessionAuth: []
+        - bearerAuth: []
 
-      parameters:
-        - name: orderId
-          in: path
-          required: true
-          description: Параметр для осуществления возврата денежных средств по определенному id заказа
-          schema:
-            type: integer
+      requestBody:
+        required: true
 
-        - name: bookId
-          in: path
-          required: true
-          description: Параметр для осуществления возврата денежных средств по определенному id книги
-          schema:
-            type: integer
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundPaymentRequest'
 
       responses:
         '200':
-          description: Оплата отменена
+          description: Возврат выполнен успешно
 
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RefundResponse'
+                $ref: '#/components/schemas/PaymentResponse'
 
         '400':
-          description: Ошибка отмены оплаты
+          description: Ошибка возврата оплаты
 
           content:
             application/json:
@@ -403,7 +396,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
 
   /auth/register:
     post:
@@ -499,7 +492,7 @@ paths:
       operationId: postLogout
 
       security:
-        - sessionAuth: []
+        - bearerAuth: []
 
       responses:
         '200':
@@ -515,10 +508,11 @@ paths:
 components:
 
   securitySchemes:
-    sessionAuth:
-      type: apiKey
-      in: cookie
-      name: JSESSIONID
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
 
   schemas:
 
@@ -528,42 +522,57 @@ components:
       properties:
         id:
           type: integer
+          description: Идентификатор книги
 
         title:
           type: string
+          description: Название книги
+
 
         author:
           $ref: '#/components/schemas/Author'
+          description: Автор книги
 
         genre:
           $ref: '#/components/schemas/Genre'
+          description: Жанр, относящийся к книге
 
         price:
           type: number
           format: double
-          description: Информация цены
+          description: Информация о цене
 
-        publisher:
+        publisherId:
           type: string
           description: Информация об издателе
 
         ISBN:
           type: string
+          description: Информация о муждународном книжном номере
 
         series:
-          type: string
+          $ref: '#/components/schemas/PublisherSeries'
+          description: Информация о серии книги
 
         release:
           type: string
+          description: Информация о дате выпуска книги
 
         description:
           type: string
+          description: Описание книги
 
         pages:
           type: string
+          description: Информация о количестве страниц
 
         wight:
           type: integer
+          description: Информация о весе книги
+
+        bookReview:
+          $ref: '#/components/schemas/BookReview'
+          description: Информация об отзывах на книгу
 
     Author:
       type: object
@@ -571,18 +580,23 @@ components:
       properties:
         id:
           type: integer
+          description: Идентификатор автора
 
         name:
           type: string
+          description: Информация об имени автора
 
         surname:
           type: string
+          description: Описание книги
 
         middleName:
           type: string
+          description: Отчество автора
 
         pseudonym:
           type: string
+          description: Информация о псевдониме автора
 
     Genre:
       type: object
@@ -590,9 +604,11 @@ components:
       properties:
         id:
           type: integer
+          description: Идентификатор жанра
 
         name:
           type: string
+          description: Информация о названии жанра
           enum:
             - HORROR
             - COMEDY
@@ -606,39 +622,55 @@ components:
       type: object
 
       properties:
+        id:
+          type: integer
+          description: Идентификатор корзины
+
         books:
           type: array
+          description: Информация о книгах в корзине
           items:
             $ref: '#/components/schemas/Book'
 
         totalPrice:
           type: number
           format: double
+          description: Итоговая стоимость книг
 
         quantityBooks:
           type: integer
+          description: Количество книг
 
         createdAt:
           type: string
           format: date-time
+          description: Информация о дате создания корзины
 
         updatedAt:
           type: string
           format: date-time
+          description: Информация о дате обновления корзины
 
     PaymentResponse:
       type: object
 
       properties:
+        id:
+          type: integer
+          description: Идентификатор ответа на оплату
+
         orderId:
           type: integer
+          description: Информация об идентификаторе заказа
 
         sumOfPay:
           type: number
           format: double
+          description: Информация о сумме платежа
 
         status:
           type: string
+          description: Информация о статусе оплаты
           enum:
             - CREATED
             - PENDING
@@ -649,23 +681,28 @@ components:
         createdAt:
           type: string
           format: date-time
-
-        message:
-          type: string
+          description: Информация о дате оплаты
 
         receiptUrl:
           type: string
           format: uri
+          description: Информация о чеке
 
     PaymentRequest:
       type: object
 
       properties:
+        id:
+          type: integer
+          description: Идентификатор запроса платежа
+
         basket:
           $ref: '#/components/schemas/Basket'
+          description: Информация о корзине, подлежащей оплате
 
         paymentMethod:
           type: string
+          description: Информация о методе оплаты
           enum:
             - CARD
             - SBP
@@ -673,32 +710,40 @@ components:
 
         deliveryAddress:
           type: string
+          description: Информация об адрерсе заставки
 
         recipientName:
           type: string
+          description: Информация об имени получателя
 
         recipientPhone:
           type: string
+          description: Информация о телефоне получателя
 
     RefundResponse:
       type: object
 
       properties:
+        id:
+          type: integer
+          description: Идентификатор отмены оплаты
+
         refund_amount:
           type: number
           format: double
+          description: Информация о сумме возврата
 
         refundId:
           type: integer
+          description: Идентификатор возврата
 
         orderId:
           type: integer
-
-        paymentId:
-          type: string
+          description: Идентификатор заказа
 
         status:
           type: string
+          description: Информация о статусе заказа
           enum:
             - PENDING
             - APPROVED
@@ -707,11 +752,113 @@ components:
 
         reason:
           type: string
+          description: Информация о причинах возврата
 
         createdAt:
           type: string
           format: date-time
+          description: Информация о дате создания книги
 
+    Publisher:
+      type: object
+
+      properties:
+        id:
+          type: integer
+          description: Идентификатор издателя
+        name:
+          type: string
+          description: Название издателя
+
+        description:
+          type: string
+          description: Описание издателя
+
+        country:
+          type: string
+          description: Информация о месте нахождения издателя
+
+        createdAt:
+          type: string
+          format: date-time
+          description: Информация о дате создания издателя
+
+        updatedAt:
+          type: string
+          format: date-time
+          description: Информация о дате обновления издателя
+
+    PublisherSeries:
+      type: object
+
+      properties:
+        id:
+          type: integer
+          description: Идентификатор серии
+
+        name:
+          type: string
+          description: Информация о названии серии
+
+        publisherId:
+          type: integer
+          description: Идентификатор издателя
+
+        createdAt:
+          type: string
+          format: date-time
+          description: Информация о дате создания серии
+
+        updatedAt:
+          type: string
+          format: date-time
+          description: Информация о дате одновления серии
+
+
+    BookReview:
+      type: object
+
+      properties:
+        id:
+          type: integer
+          description: Идентификатор отзыва
+
+        text:
+          type: string
+          description: Текст отзыва
+
+        reviewerId:
+          type: string
+          description: ИИдентификатор пользователя, оставившего отзыв
+
+        rating:
+          type: integer
+          description: Информация о рейтинге фильма
+
+        createdAt:
+          type: string
+          format: date-time
+          description: Информация о дате сосздания отзыва
+
+        updatedAt:
+          type: string
+          format: date-time
+          description: Информация о дате обновления отзыва
+
+
+    RefundPaymentRequest:
+      type: object
+
+      required:
+        - orderIds
+
+      properties:
+        orderIds:
+          type: array
+          description: Список идентификаторов для поиска
+
+          items:
+            type: integer
 
     Error:
       type: object
