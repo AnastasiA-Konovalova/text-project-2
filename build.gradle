@@ -1,10 +1,8 @@
 plugins {
-    id 'java'
-    id 'org.springframework.boot' version '3.2.5'
-    id 'io.spring.dependency-management' version '1.1.4'
-    id "org.openapi.generator" version "7.22.0"
+    id 'org.springframework.boot' version '3.2.5' apply false
+    id 'io.spring.dependency-management' version '1.1.4' apply false
+    id 'org.openapi.generator' version '7.22.0' apply false
 }
-
 
 allprojects {
     group = 'org.example'
@@ -17,50 +15,14 @@ allprojects {
 
 subprojects {
     apply plugin: 'java'
-}
 
-dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
-    implementation 'io.swagger.core.v3:swagger-annotations:2.2.21'
-
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
-    implementation 'com.google.code.findbugs:jsr305:3.0.2'
-
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-test {
-    useJUnitPlatform()
-}
-
-openApiGenerate {
-    generatorName = "spring"
-
-    inputSpec = "${rootDir}/schemas/openapi.yaml"
-    outputDir = "${buildDir}/generated"
-
-    apiPackage = "org.example.api"
-    modelPackage = "org.example.model"
-
-    configOptions = [
-            interfaceOnly: "true",
-            useSpringBoot3: "true",
-            dateLibrary: "java8",
-            skipDefaultInterface: 'true',
-            useTags: 'true'
-    ]
-}
-
-sourceSets {
-    main {
-        java {
-            srcDir "${buildDir}/generated/src/main/java"
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
         }
     }
-}
 
-compileJava.dependsOn tasks.openApiGenerate
+    test {
+        useJUnitPlatform()
+    }
+}
