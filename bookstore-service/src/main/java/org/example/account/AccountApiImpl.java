@@ -1,10 +1,10 @@
 package org.example.account;
 
-import org.example.api.AccountApi;
 import org.example.model.Book;
 import org.example.model.GetFavoriteBooksRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+import org.example.api.AccountApi;
 
 import java.util.List;
 

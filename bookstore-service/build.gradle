@@ -2,7 +2,6 @@ plugins {
     id 'java'
     id 'org.springframework.boot'
     id 'io.spring.dependency-management'
-    id 'org.openapi.generator'
 }
 
 dependencies {
@@ -14,33 +13,7 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
     implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
 
+    implementation project(':bookstore-schemas')
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-}
-openApiGenerate {
-    generatorName = "spring"
-
-    inputSpec = "${rootDir}/schemas/openapi.yaml"
-    outputDir = "${layout.buildDirectory}/generated"
-
-    apiPackage = "org.example.api"
-    modelPackage = "org.example.model"
-
-    configOptions = [
-            interfaceOnly: "true",
-            useSpringBoot3: "true",
-            useTags: "true",
-            skipDefaultInterface: "true"
-    ]
-}
-
-tasks.named("compileJava") {
-    dependsOn tasks.named("openApiGenerate")
-}
-
-sourceSets {
-    main {
-        java {
-            srcDir "${buildDir}/generated"
-        }
-    }
 }
