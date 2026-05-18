@@ -328,7 +328,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Basket'
         '400':
-          description: Неожиданная ошибка при добавлении в избранное
+          description: Ошибка при добавлении в избранное
           content:
             application/json:
               schema:
@@ -361,6 +361,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaymentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
         '400':
           description: Ошибка оплаты корзины
@@ -403,7 +405,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaymentResponse'
+                $ref: '#/components/schemas/RefundResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
         '400':
           description: Ошибка возврата оплаты
@@ -627,6 +631,8 @@ paths:
                   type: string
                 rating:
                   type: integer
+                  minimum: 1
+                  maximum: 5
                   default: 5
 
       responses:
@@ -947,7 +953,7 @@ components:
           description: Информация о цене
 
         publisherId:
-          type: string
+          type: integer
           description: Информация об издателе
 
         ISBN:
@@ -969,11 +975,12 @@ components:
           type: string
           description: Информация о количестве страниц
 
-        wight:
+        weight:
           type: integer
           description: Информация о весе книги
 
         bookReview:
+          type: array
           $ref: '#/components/schemas/BookReview'
 
     Author:
@@ -1142,7 +1149,7 @@ components:
 
         deliveryAddress:
           type: string
-          description: Информация об адрерсе заставки
+          description: Информация об адресе заставки
 
         recipientName:
           type: string
@@ -1260,8 +1267,8 @@ components:
           description: Текст отзыва
 
         reviewerId:
-          type: string
-          description: ИИдентификатор пользователя, оставившего отзыв
+          type: integer
+          description: Идентификатор пользователя, оставившего отзыв
 
         rating:
           type: integer
