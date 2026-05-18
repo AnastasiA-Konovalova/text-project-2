@@ -10,45 +10,98 @@ servers:
 
 paths:
 
+
   /books:
     get:
       tags:
-        - books
-
-      summary: Получить книги
+        - book
+      summary: Список книг
       operationId: getBooks
+
       parameters:
         - in: query
           name: id
-          description: Параметр принимает id книги для поиска
+          description: ID книги
           schema:
             type: integer
+
         - in: query
           name: authorId
-          description: Параметр примнимает id автора для поиска
+          description: ID автора
           schema:
             type: integer
+
         - in: query
           name: seriesId
-          description: Параметр принимает id серии книги для поиска
+          description: ID серии
           schema:
             type: integer
+
         - in: query
           name: publisherId
-          description: Параметр принимает id издателя для поиска
+          description: ID издателя
           schema:
             type: integer
+
         - in: query
           name: genre
-          description: Параметр принимает жанр для поиска
+          description: Жанр книги
           schema:
             type: string
+
+        - in: query
+          name: publisherName
+          description: Название издателя
+          schema:
+            type: string
+
+        - in: query
+          name: isPopular
+          description: Только популярные книги
+          schema:
+            type: boolean
+
+        - in: query
+          name: isNew
+          description: Только новые книги
+          schema:
+            type: boolean
+
         - in: query
           name: limit
-          description: Параметр указывает лимит вывода
+          description: Количество элементов
           schema:
             type: integer
+            minimum: 1
+            maximum: 100
             default: 10
+
+        - in: query
+          name: offset
+          description: Смещение
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+
+        - in: query
+          name: sort
+          description: Поле сортировки
+          schema:
+            type: string
+            enum:
+              - id
+              - title
+              - price
+        - in: query
+          name: order
+          description: Направление сортировки
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: asc
 
       responses:
         '200':
@@ -60,91 +113,54 @@ paths:
                 items:
                   $ref: '#/components/schemas/Book'
 
-
         '400':
-          description: Неверный запрос
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
 
-  /books/popular:
-    get:
-      tags:
-        - books
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
-      summary: Получить список популярных/новых книг
-      operationId: getBooksPopular
-      parameters:
-        - in: query
-          name: authorId
-          description: Параметр указывает id для поиска по автору
-          schema:
-            type: integer
-        - in: query
-          name: publisher
-          description: Параметр указывает издателя по поиска
-          schema:
-            type: string
-        - in: query
-          name: isPopular
-          description: Параметр указывает значение популярности (популярно/непопулярно) для поиска
-          schema:
-            type: boolean
-        - in: query
-          name: isNew
-          description: Параметр указывает значение новизны (новое/неновое)
-          schema:
-            type: boolean
-        - in: query
-          name: limit
-          description: Параметр указывает лимит вывода
-          schema:
-            type: integer
-            default: 10
-
-      responses:
-        '200':
-          description: Список популярных книг
-
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Book'
-
-        '400':
-          description: Неверный запрос
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /books/authors/popular:
+  /authors/popular:
     get:
       tags:
         - authors
 
-      summary: Поиск популярных авторов
-      description: Поиск популярных авторов
-      operationId: getAuthorsPopular
+      summary: Получить популярных авторов
+      description: Возвращает список популярных авторов
+      operationId: getPopularAuthors
+
+      parameters:
+        - in: query
+          name: limit
+          description: Количество элементов
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+
+        - in: query
+          name: offset
+          description: Смещение
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+
       responses:
         '200':
-          description: OK
-
+          description: Список популярных авторов
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Author'
+
         '400':
-          description: Неверный запрос
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /account/purchased-books:
     get:
@@ -158,6 +174,46 @@ paths:
       security:
         - bearerAuth: []
 
+      parameters:
+        - in: query
+          name: limit
+          description: Параметр указывает лимит вывода
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+
+        - in: query
+          name: offset
+          description: Смещение относительно начала списка
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+
+        - in: query
+          name: sort
+          required: false
+          description: Поле для сортировки
+          schema:
+            type: string
+            enum:
+              - id
+              - title
+              - price
+        - in: query
+          name: order
+          required: false
+          description: Направление сортировки
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: asc
+
+
       responses:
         '200':
           description: Список купленных книг
@@ -168,13 +224,15 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Book'
-        '400':
-          description: Неожиданная ошибка при покупке книг
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
 
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 
   /account/favorite:
@@ -184,43 +242,21 @@ paths:
 
       summary: Добавить книгу в избранное
       description: Добавление книги в избранное
-      operationId: getFavoriteBooks
+      operationId: addFavoriteBook
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - bookId
               properties:
                 bookId:
                   type: integer
       responses:
         '201':
-          description: Книга добавлена в избранное
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Book'
-        '400':
-          description: Неожиданная ошибка при добавлении в избранное
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-
-  /account/basket:
-    get:
-      tags:
-        - account
-
-      summary: Корзина с книгами
-      description: Получение корзины с книгами
-      operationId: getBasket
-
-      responses:
-        '200':
-          description: Список книг в корзине
+          description:  Книга добавлена в избранное
 
           content:
             application/json:
@@ -230,6 +266,34 @@ paths:
                   $ref: '#/components/schemas/Book'
 
         '400':
+          $ref: '#/components/responses/BadRequest'
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+  /account/basket:
+    get:
+      tags:
+        - account
+
+      summary: Корзина с книгами
+      description: Получение корзины с деталями
+      operationId: getBasket
+
+      responses:
+        '200':
+          description: Список книг в корзине
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Basket'
+
+        '400':
           description: Неверный запрос
           content:
             application/json:
@@ -237,20 +301,22 @@ paths:
                 $ref: '#/components/schemas/Error'
 
 
-  /account/into/basket:
+  /account/basket/items:
     post:
       tags:
         - account
 
       summary: Добавить книгу в корзину
       description: Добавление одной книги в корзину
-      operationId: postIntoBasket
+      operationId: addToBasket
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - bookId
               properties:
                 bookId:
                   type: integer
@@ -260,7 +326,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Book'
+                $ref: '#/components/schemas/Basket'
         '400':
           description: Неожиданная ошибка при добавлении в избранное
           content:
@@ -268,14 +334,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /payment/pay:
+  /payment:
     post:
       tags:
         - payment
 
-      summary: Оплата товаров в корзине
+      summary: Оплата корзины
       description: Произведение оплаты корзины
-      operationId: postPaymentPay
+      operationId: postPayment
       security:
         - bearerAuth: []
 
@@ -288,7 +354,7 @@ paths:
               $ref: '#/components/schemas/PaymentRequest'
 
       responses:
-        '200':
+        '201':
           description: Корзина оплачена
 
           content:
@@ -304,7 +370,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /payment/refund:
+  /payments/{paymentId}/refund:
     post:
       tags:
         - payment
@@ -315,6 +381,13 @@ paths:
       security:
         - bearerAuth: []
 
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+
       requestBody:
         required: true
 
@@ -324,7 +397,7 @@ paths:
               $ref: '#/components/schemas/RefundPaymentRequest'
 
       responses:
-        '200':
+        '201':
           description: Возврат выполнен успешно
 
           content:
@@ -340,33 +413,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /account/basket/{bookId}:
+  /account/basket/items/{itemId}:
     delete:
       tags:
         - account
       summary: Удаление товара из корзины
       description: Удаление товара из корзины по его id
-      operationId: deleteBookById
+      operationId: removeBasketItem
 
       parameters:
-        - name: bookId
+        - name: itemId
           in: path
           required: true
-          description: Параметр id книги для удаления
+          description: ID позиции корзины
           schema:
             type: integer
 
       responses:
-        '200':
-          description: Товар удален
+        '204':
+          description: Удалено из корзины
         '400':
-          description: Ошибка при удалении товара
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
 
-  /authors/{authorId}:
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /author/{authorId}:
     get:
       tags:
         - authors
@@ -390,13 +465,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Author'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
-        '400':
-          description: Неожиданная ошибка при выводе информации об авторе
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /auth/register:
     post:
@@ -405,7 +478,7 @@ paths:
 
       summary: Регистрация пользователя
       description: Осуществление регистрации пользователя
-      operationId: postRegister
+      operationId: registerUser
 
       requestBody:
         required: true
@@ -427,14 +500,16 @@ paths:
                   type: string
 
       responses:
-        '200':
+        '201':
           description: Пользователь зарегистрирован
         '400':
-          description: Регистрация не пройдена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
+
+        '409':
+          description: Пользователь уже существует
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /auth/login:
     post:
@@ -442,8 +517,8 @@ paths:
         - auth
 
       summary: Ввод данных пользователя
-      description: Ввод данных пользователя для осуществления входа в профиль
-      operationId: postLogin
+      description: Авторизация пользователя по email и паролю
+      operationId: loginUser
 
       requestBody:
         required: true
@@ -460,27 +535,37 @@ paths:
               properties:
                 email:
                   type: string
+                  format: email
 
                 password:
                   type: string
 
       responses:
         '200':
-          description: Вход выполнен успешно
-
-          headers:
-            Set-Cookie:
-              description: Сессионный cookie
-              schema:
-                type: string
-
-        '400':
-          description: Вход не выполнен
-
+          description: Успешный вход
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      email:
+                        type: string
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /auth/logout:
     post:
@@ -496,16 +581,337 @@ paths:
 
       responses:
         '200':
-          description: Сессия удалена (JSESSIONID)
+          description: Сессия удалена
 
         '400':
-          description: Выход не выполнен
+          $ref: '#/components/responses/BadRequest'
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+  /review/{bookId}/books:
+    post:
+      tags:
+        - review
+
+      summary: Отзыв на книгу
+      description: Отзыв на книгу по id книги
+      operationId: postReview
+
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          description: Параметр для идентификации по id для оставления отзыва
+          schema:
+            type: integer
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+                - rating
+              properties:
+                text:
+                  type: string
+                rating:
+                  type: integer
+                  default: 5
+
+      responses:
+        '201':
+          description:  Отзыв на книгу добавлен
+
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/BookReview'
+
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+  /reviews/{reviewId}/change:
+    patch:
+      tags:
+        - review
+
+      summary: Внесение изменений в отзыв
+      description: Внесение изменений по id отзыва
+      operationId: changeReview
+
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          description: Параметр для идентификации по id для изменения отзыва
+          schema:
+            type: integer
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                rating:
+                  type: integer
+                  default: 5
+
+      responses:
+        '200':
+          description: Отзыв на книгу изменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookReview'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+  /reviews/{reviewId}:
+    delete:
+      tags:
+        - review
+
+      summary: Удаление отзыва
+      description: Удаление отзыва по его ID
+      operationId: deleteReviewById
+
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          description: ID отзыва
+          schema:
+            type: integer
+
+      responses:
+        '204':
+          description: Отзыв успешно удалён
+
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /publisher/{publisherId}:
+    get:
+      tags:
+        - publisher
+
+      summary: Информация об издателе
+      description: Получение информации об издателе книги
+      operationId: getPublisherById
+
+      parameters:
+        - name: publisherId
+          in: path
+          required: true
+          description: Параметр для идентификации по id для поиска информации об издателе
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: Вывод издателя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publisher'
+
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+  /publisherSeries/{publisherSeriesId}:
+    get:
+      tags:
+        - publisherSeries
+
+      summary: Информация о серии
+      description: Получение информации о серии книги
+      operationId: getPublisherSeriesById
+
+      parameters:
+        - name: publisherSeriesId
+          in: path
+          required: true
+          description: Параметр для идентификации по id для поиска информации о серии
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: Вывод серии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherSeries'
+
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /review/{bookReviewId}:
+    get:
+      tags:
+        - review
+
+      summary: Отзыв на книгу
+      description: Метод для получения отзыва на книгу по id
+      operationId: getBookReviewById
+
+      parameters:
+        - name: bookReviewId
+          in: path
+          required: true
+          description: Параметр для идентификации по id для поиска отзыва
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: Вывод отзыва по id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookReview'
+
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /reviews:
+    get:
+      tags:
+        - review
+
+      summary: Список отзывов
+      description: Поиск списка отзывов
+      operationId: getReviews
+
+      parameters:
+        - in: query
+          name: limit
+          description: Параметр указывает лимит вывода
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: offset
+          description: Смещение относительно начала списка
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: sort
+          required: false
+          description: Поле для сортировки
+          schema:
+            type: string
+            enum:
+              - id
+              - reviewerId
+              - rating
+        - in: query
+          name: order
+          required: false
+          description: Направление сортировки
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: asc
+
+      responses:
+        '200':
+          description: Список отзывов по книге
+
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookReview'
+
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
 
 components:
+
+  responses:
+    BadRequest:
+      description: Некорректный запрос
+
+    Unauthorized:
+      description: Пользователь не авторизован
+
+    NotFound:
+      description: Ресурс не найден
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+
+
 
   securitySchemes:
     bearerAuth:
@@ -531,11 +937,9 @@ components:
 
         author:
           $ref: '#/components/schemas/Author'
-          description: Автор книги
 
         genre:
           $ref: '#/components/schemas/Genre'
-          description: Жанр, относящийся к книге
 
         price:
           type: number
@@ -552,7 +956,6 @@ components:
 
         series:
           $ref: '#/components/schemas/PublisherSeries'
-          description: Информация о серии книги
 
         release:
           type: string
@@ -572,7 +975,6 @@ components:
 
         bookReview:
           $ref: '#/components/schemas/BookReview'
-          description: Информация об отзывах на книгу
 
     Author:
       type: object
@@ -626,11 +1028,11 @@ components:
           type: integer
           description: Идентификатор корзины
 
-        books:
+        basketDetails:
           type: array
-          description: Информация о книгах в корзине
+          description: Детализация информации о книгах в корзине
           items:
-            $ref: '#/components/schemas/Book'
+            $ref: '#/components/schemas/BasketDetail'
 
         totalPrice:
           type: number
@@ -649,7 +1051,38 @@ components:
         updatedAt:
           type: string
           format: date-time
-          description: Информация о дате обновления корзины
+
+
+    BasketDetail:
+      type: object
+      description: Позиция книги в корзине
+
+      properties:
+        id:
+          type: integer
+          description: Идентификатор позиции корзины
+
+        bookId:
+          type: integer
+          description: Идентификатор книги
+
+        title:
+          type: string
+          description: Название книги
+
+        price:
+          type: number
+          format: double
+          description: Цена одной книги
+
+        quantity:
+          type: integer
+          description: Количество экземпляров книги в корзине
+
+        totalPrice:
+          type: number
+          format: double
+          description: Общая стоимость позиции (price * quantity)
 
     PaymentResponse:
       type: object
@@ -698,7 +1131,6 @@ components:
 
         basket:
           $ref: '#/components/schemas/Basket'
-          description: Информация о корзине, подлежащей оплате
 
         paymentMethod:
           type: string
