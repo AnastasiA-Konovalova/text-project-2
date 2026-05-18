@@ -1,4 +1,4 @@
-package org.example.account;
+package org.example.controller.account;
 
 import org.example.model.Book;
 import org.example.model.GetFavoriteBooksRequest;

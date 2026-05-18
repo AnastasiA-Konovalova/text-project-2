@@ -1,4 +1,4 @@
-package org.example.books;
+package org.example.controller.books;
 
 import org.example.api.BooksApi;
 import org.example.model.Book;

@@ -1,4 +1,4 @@
-package org.example.auth;
+package org.example.controller.auth;
 
 import org.example.api.AuthApi;
 import org.example.model.PostRegisterRequest;

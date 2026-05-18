@@ -1,4 +1,4 @@
-package org.example.payment;
+package org.example.controller.payment;
 
 import org.example.api.PaymentApi;
 import org.example.model.PaymentRequest;

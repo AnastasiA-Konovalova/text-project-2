@@ -1,4 +1,4 @@
-package org.example.authors;
+package org.example.controller.authors;
 
 import org.example.api.AuthorsApi;
 import org.example.model.Author;
