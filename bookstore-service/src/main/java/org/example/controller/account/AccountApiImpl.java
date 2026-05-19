@@ -1,7 +1,8 @@
 package org.example.controller.account;
 
+import org.example.model.AddFavoriteBookRequest;
+import org.example.model.Basket;
 import org.example.model.Book;
-import org.example.model.GetFavoriteBooksRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.example.api.AccountApi;
@@ -12,35 +13,29 @@ import java.util.List;
 public class AccountApiImpl implements AccountApi {
 
     @Override
-    public ResponseEntity<Void> deleteBookById(Integer bookId) {
+    public ResponseEntity<List<Book>> addFavoriteBook(AddFavoriteBookRequest addFavoriteBookRequest) {
+        return ResponseEntity.ok(List.of());
+    }
+
+    @Override
+    public ResponseEntity<Basket> addToBasket(AddFavoriteBookRequest addFavoriteBookRequest) {
+        Basket basket = new Basket();
+        return ResponseEntity.ok(basket);
+    }
+
+    @Override
+    public ResponseEntity<Basket> getBasket() {
+        Basket basket = new Basket();
+        return ResponseEntity.ok(basket);    }
+
+    @Override
+    public ResponseEntity<List<Book>> getPurchasedBooks(Integer limit, Integer offset, String sort, String order) {
+        return ResponseEntity.ok(List.of());
+    }
+
+    @Override
+    public ResponseEntity<Void> removeBasketItem(Integer itemId) {
         return ResponseEntity.ok().build();
     }
 
-    @Override
-    public ResponseEntity<List<Book>> getBasket() {
-        return ResponseEntity.ok(List.of());
-    }
-
-    @Override
-    public ResponseEntity<Book> getFavoriteBooks(GetFavoriteBooksRequest getFavoriteBooksRequest) {
-        Book book = new Book();
-        book.setId(getFavoriteBooksRequest.getBookId());
-        book.setTitle("Book");
-
-        return ResponseEntity.ok(book);
-    }
-
-    @Override
-    public ResponseEntity<List<Book>> getPurchasedBooks() {
-        return ResponseEntity.ok(List.of());
-    }
-
-    @Override
-    public ResponseEntity<Book> postIntoBasket(GetFavoriteBooksRequest getFavoriteBooksRequest) {
-        Book book = new Book();
-        book.setId(getFavoriteBooksRequest.getBookId());
-        book.setTitle("Book");
-
-        return ResponseEntity.ok(book);
-    }
 }

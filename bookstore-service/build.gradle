@@ -17,3 +17,7 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
+
+tasks.named('bootRun') {
+    mainClass.set("org.example.Main")
+}

@@ -1,18 +1,21 @@
 package org.example.controller.auth;
 
 import org.example.api.AuthApi;
-import org.example.model.PostRegisterRequest;
+import org.example.model.LoginUserRequest;
+import org.example.model.LoginUserResponse;
+import org.example.model.RegisterUserRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class AuthApiImpl implements AuthApi {
 
+
     @Override
-    public ResponseEntity<Void> postLogin(PostRegisterRequest postRegisterRequest) {
-        return ResponseEntity.ok()
-                .header("Set-Cookie", "JSESSIONID")
-                .build();
+    public ResponseEntity<LoginUserResponse> loginUser(LoginUserRequest loginUserRequest) {
+        LoginUserResponse loginUserResponse = new LoginUserResponse();
+        return ResponseEntity.ok(loginUserResponse);
+
     }
 
     @Override
@@ -21,7 +24,7 @@ public class AuthApiImpl implements AuthApi {
     }
 
     @Override
-    public ResponseEntity<Void> postRegister(PostRegisterRequest postRegisterRequest) {
+    public ResponseEntity<Void> registerUser(RegisterUserRequest registerUserRequest) {
         return ResponseEntity.ok().build();
     }
 }

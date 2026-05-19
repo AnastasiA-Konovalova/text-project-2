@@ -113,11 +113,18 @@ paths:
                 items:
                   $ref: '#/components/schemas/Book'
 
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /authors/popular:
     get:
@@ -156,11 +163,18 @@ paths:
                 items:
                   $ref: '#/components/schemas/Author'
 
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        '4XX':
+          description: Клиентская ошибка при оплате корзины
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /account/purchased-books:
     get:
@@ -225,14 +239,18 @@ paths:
                 items:
                   $ref: '#/components/schemas/Book'
 
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 
   /account/favorite:
@@ -265,14 +283,18 @@ paths:
                 items:
                   $ref: '#/components/schemas/Book'
 
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 
   /account/basket:
@@ -284,17 +306,26 @@ paths:
       description: Получение корзины с деталями
       operationId: getBasket
 
+      security:
+        - bearerAuth: []
+
       responses:
         '200':
-          description: Список книг в корзине
+          description: Корзина с деталями
 
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Basket'
 
-        '400':
-          description: Неверный запрос
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
           content:
             application/json:
               schema:
@@ -307,8 +338,12 @@ paths:
         - account
 
       summary: Добавить книгу в корзину
-      description: Добавление одной книги в корзину
+      description: Добавление книги в корзину
       operationId: addToBasket
+
+      security:
+        - bearerAuth: []
+
       requestBody:
         required: true
         content:
@@ -327,12 +362,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Basket'
-        '400':
-          description: Ошибка при добавлении в избранное
+        '4XX':
+          description: Клиентская ошибка
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /payment:
     post:
@@ -342,6 +383,7 @@ paths:
       summary: Оплата корзины
       description: Произведение оплаты корзины
       operationId: postPayment
+
       security:
         - bearerAuth: []
 
@@ -361,12 +403,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaymentResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-        '400':
-          description: Ошибка оплаты корзины
-
+        '4XX':
+          description: Клиентская ошибка при оплате корзины
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
           content:
             application/json:
               schema:
@@ -406,12 +450,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RefundResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-        '400':
-          description: Ошибка возврата оплаты
-
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
           content:
             application/json:
               schema:
@@ -425,6 +471,9 @@ paths:
       description: Удаление товара из корзины по его id
       operationId: removeBasketItem
 
+      security:
+        - bearerAuth: []
+
       parameters:
         - name: itemId
           in: path
@@ -436,14 +485,18 @@ paths:
       responses:
         '204':
           description: Удалено из корзины
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /author/{authorId}:
     get:
@@ -469,11 +522,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Author'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /auth/register:
     post:
@@ -506,14 +566,18 @@ paths:
       responses:
         '201':
           description: Пользователь зарегистрирован
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-        '409':
-          description: Пользователь уже существует
-
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /auth/login:
     post:
@@ -540,36 +604,32 @@ paths:
                 email:
                   type: string
                   format: email
+                  description: Email пользователя
 
                 password:
                   type: string
+                  description: Пароль пользоватея
 
       responses:
         '200':
-          description: Успешный вход
+          description: Успешная авторизация
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  accessToken:
-                    type: string
+                $ref: '#/components/schemas/LoginUserResponse'
 
-                  user:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                      email:
-                        type: string
-
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /auth/logout:
     post:
@@ -587,17 +647,18 @@ paths:
         '200':
           description: Сессия удалена
 
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 
   /review/{bookId}/books:
@@ -608,6 +669,9 @@ paths:
       summary: Отзыв на книгу
       description: Отзыв на книгу по id книги
       operationId: postReview
+
+      security:
+        - bearerAuth: []
 
       parameters:
         - name: bookId
@@ -644,17 +708,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/BookReview'
 
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 
   /reviews/{reviewId}/change:
@@ -665,6 +730,9 @@ paths:
       summary: Внесение изменений в отзыв
       description: Внесение изменений по id отзыва
       operationId: changeReview
+
+      security:
+        - bearerAuth: []
 
       parameters:
         - name: reviewId
@@ -694,17 +762,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BookReview'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 
   /reviews/{reviewId}:
@@ -715,6 +784,9 @@ paths:
       summary: Удаление отзыва
       description: Удаление отзыва по его ID
       operationId: deleteReviewById
+
+      security:
+        - bearerAuth: []
 
       parameters:
         - name: reviewId
@@ -728,14 +800,18 @@ paths:
         '204':
           description: Отзыв успешно удалён
 
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /publisher/{publisherId}:
     get:
@@ -762,14 +838,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Publisher'
 
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 
   /publisherSeries/{publisherSeriesId}:
@@ -797,14 +877,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/PublisherSeries'
 
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /review/{bookReviewId}:
     get:
@@ -831,14 +915,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/BookReview'
 
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /reviews:
     get:
@@ -846,7 +934,7 @@ paths:
         - review
 
       summary: Список отзывов
-      description: Поиск списка отзывов
+      description: Вывод списка отзывов
       operationId: getReviews
 
       parameters:
@@ -894,30 +982,22 @@ paths:
                 items:
                   $ref: '#/components/schemas/BookReview'
 
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 
 
 components:
-
-  responses:
-    BadRequest:
-      description: Некорректный запрос
-
-    Unauthorized:
-      description: Пользователь не авторизован
-
-    NotFound:
-      description: Ресурс не найден
-
-    InternalServerError:
-      description: Внутренняя ошибка сервера
-
-
 
   securitySchemes:
     bearerAuth:
@@ -981,7 +1061,9 @@ components:
 
         bookReview:
           type: array
-          $ref: '#/components/schemas/BookReview'
+          items:
+            $ref: '#/components/schemas/BookReview'
+
 
     Author:
       type: object
@@ -1298,6 +1380,25 @@ components:
 
           items:
             type: integer
+
+    LoginUserResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT токен для аутентификации
+        refreshToken:
+          type: string
+          description: Refresh токен для обновления accessToken
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: Идентификатор пользователя
+            email:
+              type: string
+              description: Email пользователя
 
     Error:
       type: object

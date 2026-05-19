@@ -1,7 +1,7 @@
 package org.example.controller.authors;
 
-import org.example.api.AuthorsApi;
 import org.example.model.Author;
+import org.example.api.AuthorsApi;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,7 +17,7 @@ public class AuthorsApiImpl implements AuthorsApi {
     }
 
     @Override
-    public ResponseEntity<List<Author>> getAuthorsPopular() {
+    public ResponseEntity<List<Author>> getPopularAuthors(Integer limit, Integer offset) {
         return ResponseEntity.ok(List.of());
     }
 }
