@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class AuthApiImpl implements AuthApi {
 
-
     @Override
     public ResponseEntity<LoginUserResponse> loginUser(LoginUserRequest loginUserRequest) {
         LoginUserResponse loginUserResponse = new LoginUserResponse();

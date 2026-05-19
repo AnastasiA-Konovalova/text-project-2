@@ -416,7 +416,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /payments/{paymentId}/refund:
+  /payment/{paymentId}/refund:
     post:
       tags:
         - payment
@@ -722,7 +722,7 @@ paths:
                 $ref: '#/components/schemas/Error'
 
 
-  /reviews/{reviewId}/change:
+  /review/{reviewId}/change:
     patch:
       tags:
         - review
@@ -776,7 +776,7 @@ paths:
                 $ref: '#/components/schemas/Error'
 
 
-  /reviews/{reviewId}:
+  /review/{reviewId}:
     delete:
       tags:
         - review
