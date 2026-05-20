@@ -67,41 +67,10 @@ paths:
           schema:
             type: boolean
 
-        - in: query
-          name: limit
-          description: Количество элементов
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 10
-
-        - in: query
-          name: offset
-          description: Смещение
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-
-        - in: query
-          name: sort
-          description: Поле сортировки
-          schema:
-            type: string
-            enum:
-              - id
-              - title
-              - price
-        - in: query
-          name: order
-          description: Направление сортировки
-          schema:
-            type: string
-            enum:
-              - asc
-              - desc
-            default: asc
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/SortBook'
+        - $ref: '#/components/parameters/Order'
 
       responses:
         '200':
@@ -136,22 +105,8 @@ paths:
       operationId: getPopularAuthors
 
       parameters:
-        - in: query
-          name: limit
-          description: Количество элементов
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 10
-
-        - in: query
-          name: offset
-          description: Смещение
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
 
       responses:
         '200':
@@ -189,44 +144,10 @@ paths:
         - bearerAuth: []
 
       parameters:
-        - in: query
-          name: limit
-          description: Параметр указывает лимит вывода
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 10
-
-        - in: query
-          name: offset
-          description: Смещение относительно начала списка
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-
-        - in: query
-          name: sort
-          required: false
-          description: Поле для сортировки
-          schema:
-            type: string
-            enum:
-              - id
-              - title
-              - price
-        - in: query
-          name: order
-          required: false
-          description: Направление сортировки
-          schema:
-            type: string
-            enum:
-              - asc
-              - desc
-            default: asc
-
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/SortBook'
+        - $ref: '#/components/parameters/Order'
 
       responses:
         '200':
@@ -261,17 +182,11 @@ paths:
       summary: Добавить книгу в избранное
       description: Добавление книги в избранное
       operationId: addFavoriteBook
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - bookId
-              properties:
-                bookId:
-                  type: integer
+
+      parameters:
+        - $ref: '#/components/parameters/BookId'
+
+
       responses:
         '201':
           description:  Книга добавлена в избранное
@@ -349,12 +264,9 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - bookId
-              properties:
-                bookId:
-                  type: integer
+              $ref: '#/components/schemas/BookIdRequest'
+
+
       responses:
         '201':
           description: Книга добавлена в корзину
@@ -661,7 +573,7 @@ paths:
                 $ref: '#/components/schemas/Error'
 
 
-  /review/{bookId}/books:
+  /review:
     post:
       tags:
         - review
@@ -673,31 +585,12 @@ paths:
       security:
         - bearerAuth: []
 
-      parameters:
-        - name: bookId
-          in: path
-          required: true
-          description: Параметр для идентификации по id для оставления отзыва
-          schema:
-            type: integer
-
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - text
-                - rating
-              properties:
-                text:
-                  type: string
-                rating:
-                  type: integer
-                  minimum: 1
-                  maximum: 5
-                  default: 5
+              $ref: '#/components/schemas/BookReviewInput'
 
       responses:
         '201':
@@ -722,7 +615,44 @@ paths:
                 $ref: '#/components/schemas/Error'
 
 
-  /review/{reviewId}/change:
+  /review/{reviewId}:
+    get:
+      tags:
+        - review
+
+      summary: Отзыв на книгу
+      description: Метод для получения отзыва на книгу по id
+      operationId: getBookReviewById
+
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          description: Параметр для идентификации по id для поиска отзыва
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: Вывод отзыва по id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookReview'
+
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
     patch:
       tags:
         - review
@@ -753,7 +683,6 @@ paths:
                   type: string
                 rating:
                   type: integer
-                  default: 5
 
       responses:
         '200':
@@ -776,7 +705,6 @@ paths:
                 $ref: '#/components/schemas/Error'
 
 
-  /review/{reviewId}:
     delete:
       tags:
         - review
@@ -890,44 +818,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /review/{bookReviewId}:
-    get:
-      tags:
-        - review
-
-      summary: Отзыв на книгу
-      description: Метод для получения отзыва на книгу по id
-      operationId: getBookReviewById
-
-      parameters:
-        - name: bookReviewId
-          in: path
-          required: true
-          description: Параметр для идентификации по id для поиска отзыва
-          schema:
-            type: integer
-
-      responses:
-        '200':
-          description: Вывод отзыва по id
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BookReview'
-
-        '4XX':
-          description: Клиентская ошибка
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '5XX':
-          description: Внутренняя ошибка сервера
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
   /reviews:
     get:
       tags:
@@ -938,38 +828,10 @@ paths:
       operationId: getReviews
 
       parameters:
-        - in: query
-          name: limit
-          description: Параметр указывает лимит вывода
-          schema:
-            type: integer
-            default: 10
-        - in: query
-          name: offset
-          description: Смещение относительно начала списка
-          schema:
-            type: integer
-            default: 0
-        - in: query
-          name: sort
-          required: false
-          description: Поле для сортировки
-          schema:
-            type: string
-            enum:
-              - id
-              - reviewerId
-              - rating
-        - in: query
-          name: order
-          required: false
-          description: Направление сортировки
-          schema:
-            type: string
-            enum:
-              - asc
-              - desc
-            default: asc
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/SortReview'
+        - $ref: '#/components/parameters/Order'
 
       responses:
         '200':
@@ -1005,6 +867,66 @@ components:
       scheme: bearer
       bearerFormat: JWT
 
+  parameters:
+
+    BookId:
+      name: bookId
+      in: query
+      description: Идентификатор книги
+      required: true
+      schema:
+        type: integer
+
+    Limit:
+      name: limit
+      in: query
+      description: Количество элементов
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+
+    Offset:
+      name: offset
+      in: query
+      description: Смещение
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+
+    SortBook:
+      name: sortBook
+      in: query
+      description: Поле сортировки
+      schema:
+        type: string
+        enum:
+          - id
+          - title
+          - price
+    SortReview:
+      name: sortBook
+      in: query
+      description: Поле сортировки
+      schema:
+        type: string
+        enum:
+          - id
+          - reviewerId
+          - rating
+    Order:
+      name: order
+      in: query
+      description: Направление сортировки
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+        default: asc
 
   schemas:
 
@@ -1090,24 +1012,13 @@ components:
           description: Информация о псевдониме автора
 
     Genre:
-      type: object
-
-      properties:
-        id:
-          type: integer
-          description: Идентификатор жанра
-
-        name:
-          type: string
-          description: Информация о названии жанра
-          enum:
-            - HORROR
-            - COMEDY
-            - ROMANTIC
-            - DRAMA
-            - THRILLER
-
-
+      type: string
+      enum:
+        - HORROR
+        - COMEDY
+        - ROMANTIC
+        - DRAMA
+        - THRILLER
 
     Basket:
       type: object
@@ -1344,6 +1255,9 @@ components:
           type: integer
           description: Идентификатор отзыва
 
+        book:
+          $ref: '#/components/schemas/Book'
+
         text:
           type: string
           description: Текст отзыва
@@ -1355,6 +1269,9 @@ components:
         rating:
           type: integer
           description: Информация о рейтинге фильма
+          minimum: 1
+          maximum: 5
+          default: 5
 
         createdAt:
           type: string
@@ -1366,6 +1283,21 @@ components:
           format: date-time
           description: Информация о дате обновления отзыва
 
+    BookReviewInput:
+      type: object
+      required:
+        - bookId
+        - text
+        - rating
+      properties:
+        bookId:
+          type: integer
+          description: Параметр для идентификации по id для оставления отзыва
+        text:
+          type: string
+          description: Текст отзыва
+        rating:
+          $ref: '#/components/schemas/BookReview/properties/rating'
 
     RefundPaymentRequest:
       type: object
@@ -1400,9 +1332,18 @@ components:
               type: string
               description: Email пользователя
 
+    BookIdRequest:
+      type: object
+      required:
+        - bookId
+      properties:
+        bookId:
+          type: integer
+
     Error:
       type: object
 
       properties:
         message:
           type: string
+

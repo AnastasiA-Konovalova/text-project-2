@@ -2,8 +2,8 @@ package org.example.controller.review;
 
 import org.example.api.ReviewApi;
 import org.example.model.BookReview;
+import org.example.model.BookReviewInput;
 import org.example.model.ChangeReviewRequest;
-import org.example.model.PostReviewRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -35,7 +35,7 @@ public class ReviewApiImpl implements ReviewApi {
     }
 
     @Override
-    public ResponseEntity<BookReview> postReview(Integer bookId, PostReviewRequest postReviewRequest) {
+    public ResponseEntity<BookReview> postReview(BookReviewInput bookReviewInput) {
         BookReview bookReview = new BookReview();
         return ResponseEntity.ok(bookReview);
     }

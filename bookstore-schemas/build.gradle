@@ -1,29 +1,5 @@
 plugins {
-    id 'java'
-    id 'org.springframework.boot'
-    id 'io.spring.dependency-management'
     id 'org.openapi.generator'
-}
-
-group = 'org.example'
-version = '1.0-SNAPSHOT'
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
-
-    implementation 'org.openapitools:jackson-databind-nullable:0.2.6'
-    implementation 'io.swagger.core.v3:swagger-annotations:2.2.21'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
-    implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
-
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 openApiGenerate {
@@ -55,6 +31,10 @@ sourceSets {
     }
 }
 bootJar {
+    enabled = false
+}
+
+bootRun {
     enabled = false
 }
 
