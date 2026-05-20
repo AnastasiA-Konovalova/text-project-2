@@ -10,7 +10,6 @@ servers:
 
 paths:
 
-
   /books:
     get:
       tags:
@@ -23,13 +22,13 @@ paths:
           name: id
           description: ID книги
           schema:
-            type: integer
+            $ref: '#/components/schemas/book-id'
 
         - in: query
           name: authorId
           description: ID автора
           schema:
-            type: integer
+            $ref: '#/components/schemas/author-id'
 
         - in: query
           name: seriesId
@@ -41,13 +40,13 @@ paths:
           name: publisherId
           description: ID издателя
           schema:
-            type: integer
+            $ref: '#/components/schemas/publisher-id'
 
         - in: query
           name: genre
           description: Жанр книги
           schema:
-            type: string
+            $ref: '#/components/schemas/Genre'
 
         - in: query
           name: publisherName
@@ -266,7 +265,6 @@ paths:
             schema:
               $ref: '#/components/schemas/BookIdRequest'
 
-
       responses:
         '201':
           description: Книга добавлена в корзину
@@ -344,7 +342,7 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            $ref: '#/components/schemas/payment-id'
 
       requestBody:
         required: true
@@ -392,7 +390,7 @@ paths:
           required: true
           description: ID позиции корзины
           schema:
-            type: integer
+            $ref: '#/components/schemas/item-id'
 
       responses:
         '204':
@@ -425,7 +423,7 @@ paths:
           required: true
           description: Параметр для идентификации по id для поиска информации об авторе
           schema:
-            type: integer
+            $ref: '#/components/schemas/author-id'
 
       responses:
         '200':
@@ -572,7 +570,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-
   /review:
     post:
       tags:
@@ -630,7 +627,7 @@ paths:
           required: true
           description: Параметр для идентификации по id для поиска отзыва
           schema:
-            type: integer
+            $ref: '#/components/schemas/review-id'
 
       responses:
         '200':
@@ -670,7 +667,7 @@ paths:
           required: true
           description: Параметр для идентификации по id для изменения отзыва
           schema:
-            type: integer
+            $ref: '#/components/schemas/review-id'
 
       requestBody:
         required: true
@@ -704,7 +701,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-
     delete:
       tags:
         - review
@@ -722,7 +718,7 @@ paths:
           required: true
           description: ID отзыва
           schema:
-            type: integer
+            $ref: '#/components/schemas/review-id'
 
       responses:
         '204':
@@ -756,7 +752,7 @@ paths:
           required: true
           description: Параметр для идентификации по id для поиска информации об издателе
           schema:
-            type: integer
+            $ref: '#/components/schemas/publisher-id'
 
       responses:
         '200':
@@ -779,7 +775,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-
   /publisherSeries/{publisherSeriesId}:
     get:
       tags:
@@ -795,7 +790,7 @@ paths:
           required: true
           description: Параметр для идентификации по id для поиска информации о серии
           schema:
-            type: integer
+            $ref: '#/components/schemas/publisherSeries-id'
 
       responses:
         '200':
@@ -930,13 +925,40 @@ components:
 
   schemas:
 
+    book-id:
+      type: integer
+      description: Идентификатор книги
+
+    payment-id:
+      type: integer
+      description: Идентификатор платежа
+
+    item-id:
+      type: integer
+      description: Идентификатор корзины
+
+    author-id:
+      type: integer
+      description: Идентификатор автора
+
+    review-id:
+      type: integer
+      description: Идентификатор отзыва
+
+    publisher-id:
+      type: integer
+      description: Идентификатор публикатора
+
+    publisherSeries-id:
+      type: integer
+      description: Идентификатор серии
+
     Book:
       type: object
 
       properties:
         id:
-          type: integer
-          description: Идентификатор книги
+          $ref: '#/components/schemas/book-id'
 
         title:
           type: string
@@ -955,8 +977,7 @@ components:
           description: Информация о цене
 
         publisherId:
-          type: integer
-          description: Информация об издателе
+          $ref: '#/components/schemas/publisher-id'
 
         ISBN:
           type: string
@@ -981,10 +1002,12 @@ components:
           type: integer
           description: Информация о весе книги
 
-        bookReview:
-          type: array
-          items:
-            $ref: '#/components/schemas/BookReview'
+        reviewCount:
+          type: integer
+          description: Количество отзывов
+        averageRating:
+          type: number
+          description: Средний рейтинг
 
 
     Author:
@@ -1063,8 +1086,7 @@ components:
           description: Идентификатор позиции корзины
 
         bookId:
-          type: integer
-          description: Идентификатор книги
+          $ref: '#/components/schemas/book-id'
 
         title:
           type: string
@@ -1291,8 +1313,7 @@ components:
         - rating
       properties:
         bookId:
-          type: integer
-          description: Параметр для идентификации по id для оставления отзыва
+          $ref: '#/components/schemas/book-id'
         text:
           type: string
           description: Текст отзыва
@@ -1346,4 +1367,3 @@ components:
       properties:
         message:
           type: string
-
