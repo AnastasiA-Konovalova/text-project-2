@@ -1015,12 +1015,11 @@ components:
 
       properties:
         id:
-          type: integer
-          description: Идентификатор автора
+          $ref: '#/components/schemas/author-id'
 
         name:
           type: string
-          description: Информация об имени автора
+          description: Имя автора
 
         surname:
           type: string
@@ -1032,7 +1031,7 @@ components:
 
         pseudonym:
           type: string
-          description: Информация о псевдониме автора
+          description: Псевдоним автора
 
     Genre:
       type: string
@@ -1082,8 +1081,7 @@ components:
 
       properties:
         id:
-          type: integer
-          description: Идентификатор позиции корзины
+          $ref: '#/components/schemas/item-id'
 
         bookId:
           $ref: '#/components/schemas/book-id'
@@ -1179,17 +1177,12 @@ components:
 
       properties:
         id:
-          type: integer
-          description: Идентификатор отмены оплаты
+          $ref: '#/components/schemas/payment-id'
 
         refund_amount:
           type: number
           format: double
           description: Информация о сумме возврата
-
-        refundId:
-          type: integer
-          description: Идентификатор возврата
 
         orderId:
           type: integer
@@ -1218,8 +1211,7 @@ components:
 
       properties:
         id:
-          type: integer
-          description: Идентификатор издателя
+          $ref: '#/components/schemas/publisher-id'
         name:
           type: string
           description: Название издателя
@@ -1247,16 +1239,14 @@ components:
 
       properties:
         id:
-          type: integer
-          description: Идентификатор серии
+          $ref: '#/components/schemas/publisherSeries-id'
 
         name:
           type: string
           description: Информация о названии серии
 
         publisherId:
-          type: integer
-          description: Идентификатор издателя
+          $ref: '#/components/schemas/publisher-id'
 
         createdAt:
           type: string
@@ -1274,8 +1264,7 @@ components:
 
       properties:
         id:
-          type: integer
-          description: Идентификатор отзыва
+          $ref: '#/components/schemas/review-id'
 
         book:
           $ref: '#/components/schemas/Book'
