@@ -1,4 +1,11 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
 rootProject.name = 'test-project-2'
 
 include 'bookstore-service'
 include 'bookstore-schemas'
+

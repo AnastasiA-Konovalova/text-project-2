@@ -148,6 +148,12 @@ paths:
         - $ref: '#/components/parameters/SortBook'
         - $ref: '#/components/parameters/Order'
 
+        - in: query
+          name: accountId
+          description: ID аккаунта
+          schema:
+            type: integer
+
       responses:
         '200':
           description: Список купленных книг
@@ -183,7 +189,14 @@ paths:
       operationId: addFavoriteBook
 
       parameters:
+        - in: query
+          name: accountId
+          description: ID аккаунта
+          schema:
+            $ref: '#/components/schemas/account-id'
+
         - $ref: '#/components/parameters/BookId'
+
 
       responses:
         '201':
@@ -209,6 +222,49 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+    get:
+      tags:
+        - account
+
+      summary: Список книг в избранном
+      description: Получение информации о списке избранных книг
+      operationId: getFavoriteBooks
+
+      parameters:
+        - in: query
+          name: accountId
+          description: ID аккаунта
+          schema:
+            $ref: '#/components/schemas/account-id'
+
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/SortFavorite'
+        - $ref: '#/components/parameters/Order'
+
+      responses:
+        '200':
+          description: Список книг в избранном
+
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /account/basket:
     get:
@@ -221,6 +277,13 @@ paths:
 
       security:
         - bearerAuth: []
+
+      parameters:
+        - in: query
+          name: accountId
+          description: ID аккаунта
+          schema:
+            type: integer
 
       responses:
         '200':
@@ -256,6 +319,14 @@ paths:
 
       security:
         - bearerAuth: []
+
+      parameters:
+        - in: query
+          name: accountId
+          description: ID аккаунта
+          schema:
+            type: integer
+
 
       requestBody:
         required: true
@@ -822,6 +893,12 @@ paths:
       operationId: getReviews
 
       parameters:
+        - in: query
+          name: bookId
+          description: ID книги
+          schema:
+            type: integer
+
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
         - $ref: '#/components/parameters/SortReview'
@@ -911,6 +988,17 @@ components:
           - id
           - reviewerId
           - rating
+
+    SortFavorite:
+      name: sortBook
+      in: query
+      description: Поле сортировки
+      schema:
+        type: string
+        enum:
+          - id
+          - createdAt
+
     Order:
       name: order
       in: query
@@ -927,6 +1015,14 @@ components:
     book-id:
       type: integer
       description: Идентификатор книги
+
+    account-id:
+      type: integer
+      description: Идентификатор аккаунта
+
+    favorite-id:
+      type: integer
+      description: Идентификатор избранного
 
     payment-id:
       type: integer
@@ -963,7 +1059,6 @@ components:
           type: string
           description: Название книги
 
-
         author:
           $ref: '#/components/schemas/Author'
 
@@ -972,7 +1067,6 @@ components:
 
         price:
           type: number
-          format: double
           description: Информация о цене
 
         publisherId:
@@ -989,25 +1083,30 @@ components:
           type: string
           description: Информация о дате выпуска книги
 
+        release-date:
+          type: string
+          format: date-time
+
         description:
           type: string
           description: Описание книги
 
         pages:
-          type: string
+          type: integer
           description: Информация о количестве страниц
 
         weight:
-          type: integer
+          type: number
+          format: double
           description: Информация о весе книги
 
         reviewCount:
           type: integer
           description: Количество отзывов
+
         averageRating:
           type: number
           description: Средний рейтинг
-
 
     Author:
       type: object
@@ -1057,7 +1156,6 @@ components:
 
         totalPrice:
           type: number
-          format: double
           description: Итоговая стоимость книг
 
         quantityBooks:
@@ -1091,7 +1189,6 @@ components:
 
         price:
           type: number
-          format: double
           description: Цена одной книги
 
         quantity:
@@ -1100,7 +1197,6 @@ components:
 
         totalPrice:
           type: number
-          format: double
           description: Общая стоимость позиции (price * quantity)
 
     PaymentResponse:
@@ -1257,6 +1353,24 @@ components:
           format: date-time
           description: Информация о дате одновления серии
 
+    BookFavorite:
+      type: object
+
+      properties:
+        id:
+          $ref: '#/components/schemas/favorite-id'
+        book:
+          $ref: '#/components/schemas/Book'
+
+        createdAt:
+          type: string
+          format: date-time
+          description: Информация о дате создания избранного
+
+        updatedAt:
+          type: string
+          format: date-time
+          description: Информация о дате одновления избранного
 
     BookReview:
       type: object
@@ -1299,6 +1413,7 @@ components:
         - bookId
         - text
         - rating
+        - reviewerId
       properties:
         bookId:
           $ref: '#/components/schemas/book-id'
@@ -1307,6 +1422,9 @@ components:
           description: Текст отзыва
         rating:
           $ref: '#/components/schemas/BookReview/properties/rating'
+        reviewerId:
+          type: integer
+          description: Идентификатор пользователя, оставившего отзыв
 
     RefundPaymentRequest:
       type: object
@@ -1322,6 +1440,28 @@ components:
           items:
             type: integer
 
+    UserDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Идентификатор пользователя
+        email:
+          type: string
+          description: Email пользователя
+        name:
+          type: string
+          description: Имя
+        surname:
+          type: string
+          description: Фамилия
+        middleName:
+          type: string
+          description: Отчество
+        phoneNumber:
+          type: string
+          description: Номер телефона
+
     LoginUserResponse:
       type: object
       properties:
@@ -1332,14 +1472,7 @@ components:
           type: string
           description: Refresh токен для обновления accessToken
         user:
-          type: object
-          properties:
-            id:
-              type: integer
-              description: Идентификатор пользователя
-            email:
-              type: string
-              description: Email пользователя
+          $ref: '#/components/schemas/UserDto'
 
     BookIdRequest:
       type: object

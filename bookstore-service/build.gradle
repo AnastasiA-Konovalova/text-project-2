@@ -1,7 +1,26 @@
+plugins {
+    id 'java'
+    id 'org.openapi.generator'
+}
 dependencies {
     implementation project(':bookstore-schemas')
 }
 
 tasks.named('bootRun') {
     mainClass.set("org.example.Main")
+}
+
+openApiGenerate {
+    generatorName = "spring"
+    inputSpec = "$rootDir/bookstore-schemas/schemas/openapi.yaml"
+    outputDir = "$buildDir/generated"
+
+    globalProperties = [
+            models: "",
+            modelDocs: "false"
+    ]
+
+    additionalProperties = [
+            modelNameSuffix: "Dto"
+    ]
 }
