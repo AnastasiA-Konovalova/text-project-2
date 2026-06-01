@@ -1,6 +1,5 @@
 package org.example.database;
 
-import org.example.model.Publisher;
 import org.example.model.PublisherEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 

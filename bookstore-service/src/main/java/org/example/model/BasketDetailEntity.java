@@ -16,9 +16,6 @@ public class BasketDetailEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-//    @Column(name = "basket_id")
-//    private Integer basketId;
-
     @ManyToOne
     @JoinColumn(name = "book_id", nullable = false)
     private BookEntity book;

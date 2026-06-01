@@ -1,7 +1,6 @@
 package org.example.model;
 
 import jakarta.persistence.*;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.model.Genre;

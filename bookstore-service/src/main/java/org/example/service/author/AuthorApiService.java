@@ -2,19 +2,14 @@ package org.example.service.author;
 
 import lombok.RequiredArgsConstructor;
 import org.example.database.AuthorRepository;
+import org.example.exeception.ClassNotFoundException;
 import org.example.mapper.AuthorMapper;
 import org.example.model.Author;
 import org.example.model.AuthorEntity;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
-import javax.sql.DataSource;
-import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -25,10 +20,7 @@ public class AuthorApiService implements AuthorApiInterface {
 
     @Override
     public Author getAuthorById(Integer authorId) {
-        AuthorEntity author = authorRepository.findById(authorId).orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND,
-                "User not found"
-        ));
+        AuthorEntity author = existAuthorEntity(authorId);
         return authorMapper.toDto(author);
     }
 
@@ -43,5 +35,9 @@ public class AuthorApiService implements AuthorApiInterface {
                 .skip(offset)
                 .limit(limit)
                 .toList();
+    }
+
+    private AuthorEntity existAuthorEntity(Integer authorId) {
+        return authorRepository.findById(authorId).orElseThrow(() -> new ClassNotFoundException("Author not found"));
     }
 }

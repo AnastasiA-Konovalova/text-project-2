@@ -14,7 +14,8 @@ public class PaymentApiImpl implements PaymentApi {
     @Override
     public ResponseEntity<PaymentResponse> postPayment(PaymentRequest paymentRequest) {
         PaymentResponse paymentResponse = new PaymentResponse();
-        return ResponseEntity.ok(paymentResponse);    }
+        return ResponseEntity.ok(paymentResponse);
+    }
 
     @Override
     public ResponseEntity<RefundResponse> refundPayBooksById(Integer paymentId, RefundPaymentRequest refundPaymentRequest) {

@@ -19,8 +19,6 @@ public class AccountEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    //private Integer basketId;
-
     @Column(name = "name")
     private String name;
 

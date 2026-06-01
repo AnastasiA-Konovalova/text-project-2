@@ -2,6 +2,7 @@ package org.example.service.book;
 
 import lombok.RequiredArgsConstructor;
 import org.example.database.BookApiRepository;
+import org.example.exeception.ClassNotFoundException;
 import org.example.mapper.BookMapper;
 import org.example.model.Book;
 import org.example.model.BookEntity;
@@ -34,7 +35,7 @@ public class BookApiService implements BookApiInterface {
                                Integer offset,
                                String sortBook,
                                String order) {
-
+        existBookEntity(id);
         Sort sort;
         if ("title".equalsIgnoreCase(sortBook)) sort = Sort.by("title");
         else if ("price".equalsIgnoreCase(sortBook)) sort = Sort.by("price");
@@ -62,5 +63,9 @@ public class BookApiService implements BookApiInterface {
                 .map(bookMapper::toDto)
                 .toList();
         return books;
+    }
+
+    private BookEntity existBookEntity(Integer id) {
+        return bookRepository.findById(id).orElseThrow(() -> new ClassNotFoundException("Book not found"));
     }
 }

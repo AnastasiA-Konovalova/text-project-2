@@ -3,6 +3,7 @@ package org.example.service.review;
 import lombok.RequiredArgsConstructor;
 import org.example.database.BookApiRepository;
 import org.example.database.ReviewApiRepository;
+import org.example.exeception.ClassNotFoundException;
 import org.example.mapper.ReviewMapper;
 import org.example.model.*;
 import org.example.model.BookReview;
@@ -26,31 +27,30 @@ public class ReviewApiService implements ReviewApiInterface {
 
     @Override
     public BookReview changeReview(Integer reviewId, ChangeReviewRequest changeReviewRequest) {
-        ReviewEntity reviewEntity = reviewRepository.findById(reviewId).orElseThrow();
+        ReviewEntity reviewEntity = existReviewEntity(reviewId);
 
         if (changeReviewRequest.getRating() != null) reviewEntity.setRating(changeReviewRequest.getRating());
         if (changeReviewRequest.getText() != null) reviewEntity.setText(changeReviewRequest.getText());
         reviewEntity.setUpdatedAt(LocalDateTime.now());
-        System.out.println(reviewEntity.getUpdatedAt()+"ERT");
         reviewRepository.save(reviewEntity);
         return reviewMapper.toDto(reviewEntity);
     }
 
     @Override
     public void deleteReviewById(Integer reviewId) {
-        reviewRepository.findById(reviewId).orElseThrow();
+        existReviewEntity(reviewId);
         reviewRepository.deleteById(reviewId);
     }
 
     @Override
     public BookReview getBookReviewById(Integer bookReviewId) {
-        ReviewEntity reviewEntity = reviewRepository.findById(bookReviewId).orElseThrow();
+        ReviewEntity reviewEntity = existReviewEntity(bookReviewId);
         return reviewMapper.toDto(reviewEntity);
     }
 
     @Override
     public List<BookReview> getReviews(Integer bookId, Integer limit, Integer offset, String sortBook, String order) {
-        BookEntity bookEntity = bookApiRepository.findById(bookId).orElseThrow();
+        existBookEntity(bookId);
 
         Sort sort;
         if ("reviewerId".equalsIgnoreCase(sortBook)) sort = Sort.by("reviewerId");
@@ -75,7 +75,8 @@ public class ReviewApiService implements ReviewApiInterface {
 
     @Override
     public BookReview postReview(BookReviewInput bookReviewInput) {
-        BookEntity bookEntity = bookApiRepository.findById(bookReviewInput.getBookId()).orElseThrow();
+        BookEntity bookEntity = existBookEntity(bookReviewInput.getBookId());
+
         ReviewEntity review = new ReviewEntity();
         review.setBook(bookEntity);
         review.setText(bookReviewInput.getText());
@@ -83,10 +84,18 @@ public class ReviewApiService implements ReviewApiInterface {
         review.setReviewerId(bookReviewInput.getReviewerId());
 
         reviewRepository.save(review);
-        System.out.println(bookReviewInput.getReviewerId()+"wdefeR");
         bookEntity.setReviewCount(bookEntity.getReviewCount() + 1);
 
         bookApiRepository.save(bookEntity);
         return reviewMapper.toDto(review);
     }
+
+    private ReviewEntity existReviewEntity(Integer reviewId) {
+        return reviewRepository.findById(reviewId).orElseThrow(() -> new ClassNotFoundException("Review not found"));
+    }
+
+    private BookEntity existBookEntity(Integer bookId) {
+        return bookApiRepository.findById(bookId).orElseThrow(() -> new ClassNotFoundException("Book not found"));
+    }
+
 }

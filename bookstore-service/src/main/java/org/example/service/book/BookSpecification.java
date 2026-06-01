@@ -7,8 +7,6 @@ import org.springframework.data.jpa.domain.Specification;
 public class BookSpecification {
 
     public static Specification<BookEntity> hasId(Integer id) {
-//            return ((root, query, criteriaBuilder) ->
-//                    criteriaBuilder.equal(root.get("id"), id));
         return (root, query, criteriaBuilder) -> {
             if (id == null) {
                 return criteriaBuilder.conjunction();
@@ -37,10 +35,6 @@ public class BookSpecification {
     }
 
     public static Specification<BookEntity> hasPublisher(Integer publisherId) {
-
-
-//        return ((root, query, criteriaBuilder) ->
-         //       criteriaBuilder.equal(root.get("publisher").get("id"), publisherId));
         return (root, query, criteriaBuilder) -> {
             if (publisherId == null) {
                 return criteriaBuilder.conjunction();

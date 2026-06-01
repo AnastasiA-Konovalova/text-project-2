@@ -1,6 +1,5 @@
 package org.example.mapper;
 
-import jakarta.persistence.Column;
 import org.example.model.BasketDetail;
 import org.example.model.BasketDetailEntity;
 import org.springframework.stereotype.Component;
@@ -24,6 +23,4 @@ public class BasketDetailMapper {
 
         return dto;
     }
-
-
 }

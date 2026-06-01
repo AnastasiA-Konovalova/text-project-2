@@ -4,7 +4,6 @@ import org.example.model.Publisher;
 import org.example.model.PublisherEntity;
 import org.springframework.stereotype.Component;
 
-import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
 @Component
@@ -22,7 +21,4 @@ public class PublisherMapper {
 
         return dto;
     }
-
-
-
 }

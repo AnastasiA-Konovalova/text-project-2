@@ -1,14 +1,11 @@
 package org.example.mapper;
 
 import lombok.RequiredArgsConstructor;
-import org.example.model.Book;
-import org.example.model.BookEntity;
 import org.example.model.BookReview;
 import org.example.model.ReviewEntity;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
 @Component
@@ -28,6 +25,4 @@ public class ReviewMapper {
 
         return dto;
     }
-
-
 }

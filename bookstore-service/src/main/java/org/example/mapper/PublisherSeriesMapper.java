@@ -4,7 +4,6 @@ import org.example.model.PublisherSeries;
 import org.example.model.PublisherSeriesEntity;
 import org.springframework.stereotype.Component;
 
-import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
 @Component
@@ -19,9 +18,7 @@ public class PublisherSeriesMapper {
         dto.setPublisherId(entity.getPublisherId());
         dto.setCreatedAt(entity.getCreatedAt().atOffset(ZoneOffset.UTC));
         dto.setCreatedAt(entity.getUpdatedAt().atOffset(ZoneOffset.UTC));
-        //dto.setUpdatedAt(OffsetDateTime.from(entity.getUpdatedAt()));
 
         return dto;
     }
-
 }

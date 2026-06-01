@@ -1,6 +1,5 @@
 package org.example.service.account;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.database.AccountApiRepository;
 import org.example.database.BasketDetailRepository;
@@ -68,7 +67,6 @@ public class AccountApiService implements AccountApiInterface {
                 .toList();
         }
 
-//    @Transactional
     @Override
     public Basket addToBasket(BookIdRequest bookIdRequest, Integer accountId) {
         BookEntity book = existBookEntity(bookIdRequest.getBookId());
@@ -76,7 +74,6 @@ public class AccountApiService implements AccountApiInterface {
 
         BasketEntity basket = account.getBasket();
 
-        // 1. создаём корзину, если её нет
         if (basket == null) {
             basket = new BasketEntity();
             basket.setAccount(account);
@@ -84,7 +81,6 @@ public class AccountApiService implements AccountApiInterface {
             account.setBasket(basket);
         }
 
-        // 2. ищем уже существующий товар в корзине
         BasketDetailEntity existing = basket.getBasketDetails()
                 .stream()
                 .filter(d -> d.getBook().getId().equals(book.getId()))
@@ -94,14 +90,12 @@ public class AccountApiService implements AccountApiInterface {
         BigDecimal price = book.getPrice();
 
         if (existing != null) {
-            // 3. если есть — увеличиваем количество
             int newQty = existing.getQuantity() + 1;
             existing.setQuantity(newQty);
 
             existing.setTotalPrice(price.multiply(BigDecimal.valueOf(newQty)));
 
         } else {
-            // 4. если нет — создаём новую строку
             BasketDetailEntity detail = new BasketDetailEntity();
             detail.setBasket(basket);
             detail.setBook(book);
@@ -111,8 +105,6 @@ public class AccountApiService implements AccountApiInterface {
 
             basket.getBasketDetails().add(detail);
         }
-
-        // 5. пересчёт общей суммы корзины
         recalculateBasket(basket);
 
         BasketEntity saved = basketRepository.save(basket);
@@ -176,17 +168,6 @@ public class AccountApiService implements AccountApiInterface {
             quantity += detail.getQuantity();
         }
 
-//        BigDecimal total = basket.getBasketDetails()
-//                .stream()
-//                .map(BasketDetailEntity::getTotalPrice)
-//                .filter(Objects::nonNull)
-//                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-//        int quantity = basket.getBasketDetails()
-//                .stream()
-//                .mapToInt(BasketDetailEntity::getQuantity)
-//                .sum();
-
         basket.setTotalPrice(total);
         basket.setQuantityBooks(quantity);
     }
@@ -202,6 +183,4 @@ public class AccountApiService implements AccountApiInterface {
     private BasketDetailEntity existBasketDetailEntity(Integer id) {
         return basketDetailRepository.findById(id).orElseThrow(() -> new BasketItemNotFoundException("Basket item not found"));
     }
-
 }
-

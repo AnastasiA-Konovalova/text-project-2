@@ -26,10 +26,7 @@ public class JwtFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
             String login = jwtService.extractLogin(token);
-
-            // здесь можно загрузить UserDetails и положить в SecurityContext
         }
-
         filterChain.doFilter(request, response);
     }
 }

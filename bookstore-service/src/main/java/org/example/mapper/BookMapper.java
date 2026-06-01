@@ -7,7 +7,6 @@ import org.example.model.BookEntity;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
 @Component
@@ -45,5 +44,4 @@ public class BookMapper {
 
         return dto;
     }
-
 }
