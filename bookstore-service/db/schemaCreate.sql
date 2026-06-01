@@ -66,7 +66,6 @@ CREATE TABLE IF NOT EXISTS books (
     series_id BIGINT,
     price NUMERIC NOT NULL,
     isbn VARCHAR(255),
-    release VARCHAR(255),
     release_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     description VARCHAR(255) NOT NULL,
     pages BIGINT NOT NULL,

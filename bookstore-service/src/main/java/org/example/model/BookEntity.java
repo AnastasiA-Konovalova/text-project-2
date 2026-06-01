@@ -46,9 +46,6 @@ public class BookEntity {
     @Column(name = "isbn")
     private String isbn;
 
-    @Column(name = "release")
-    private String release;
-
     @Column(name = "release_date")
     private LocalDateTime releaseDate;
 

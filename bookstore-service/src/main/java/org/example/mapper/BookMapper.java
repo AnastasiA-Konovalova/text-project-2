@@ -37,7 +37,6 @@ public class BookMapper {
         dto.setISBN(bookEntity.getIsbn());
         dto.setPages(bookEntity.getPages());
         dto.setPrice(bookEntity.getPrice());
-        dto.setRelease(bookEntity.getRelease());
         dto.setReleaseDate(bookEntity.getReleaseDate().atOffset(ZoneOffset.UTC));
         dto.setReviewCount(bookEntity.getReviewCount());
         dto.setWeight(bookEntity.getWeight());
