@@ -35,7 +35,9 @@ public class BookApiService implements BookApiInterface {
                                Integer offset,
                                String sortBook,
                                String order) {
-        existBookEntity(id);
+        if (id != null) {
+            existBookEntity(id);
+        }
         Sort sort;
         if ("title".equalsIgnoreCase(sortBook)) sort = Sort.by("title");
         else if ("price".equalsIgnoreCase(sortBook)) sort = Sort.by("price");
