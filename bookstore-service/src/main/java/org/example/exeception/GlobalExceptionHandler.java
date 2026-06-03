@@ -9,12 +9,6 @@ import org.springframework.web.server.ResponseStatusException;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(BasketItemNotFoundException.class)
-    public ResponseEntity<Error> handle(BasketItemNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new Error());
-    }
-
     @ExceptionHandler(ClassNotFoundException.class)
     public ResponseEntity<Error> handle(ClassNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
