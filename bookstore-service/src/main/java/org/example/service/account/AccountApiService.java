@@ -5,7 +5,6 @@ import org.example.database.AccountApiRepository;
 import org.example.database.BasketDetailRepository;
 import org.example.database.BasketRepository;
 import org.example.database.BookApiRepository;
-import org.example.exeception.BasketItemNotFoundException;
 import org.example.exeception.ClassNotFoundException;
 import org.example.mapper.BasketMapper;
 import org.example.mapper.BookMapper;
@@ -181,6 +180,6 @@ public class AccountApiService implements AccountApiInterface {
     }
 
     private BasketDetailEntity existBasketDetailEntity(Integer id) {
-        return basketDetailRepository.findById(id).orElseThrow(() -> new BasketItemNotFoundException("Basket item not found"));
+        return basketDetailRepository.findById(id).orElseThrow(() -> new ClassNotFoundException("Basket item not found"));
     }
 }
