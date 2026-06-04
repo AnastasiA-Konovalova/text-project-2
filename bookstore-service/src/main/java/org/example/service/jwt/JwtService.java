@@ -36,4 +36,13 @@ public class JwtService {
                 .getBody()
                 .getSubject();
     }
+
+    public boolean isValid(String token) {
+        try {
+            extractLogin(token); // если парсинг проходит — токен валиден
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

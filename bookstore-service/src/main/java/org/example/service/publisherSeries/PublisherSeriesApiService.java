@@ -2,7 +2,7 @@ package org.example.service.publisherSeries;
 
 import lombok.RequiredArgsConstructor;
 import org.example.database.PublisherSeriesApiRepository;
-import org.example.exeception.ClassNotFoundException;
+import org.example.exeception.NotFoundException;
 import org.example.mapper.PublisherSeriesMapper;
 import org.example.model.PublisherSeries;
 import org.example.model.PublisherSeriesEntity;
@@ -22,6 +22,6 @@ public class PublisherSeriesApiService implements PublisherSeriesApiInterface {
     }
 
     private PublisherSeriesEntity existBookEntity(Integer publisherSeriesId) {
-        return publisherSeriesRepository.findById(publisherSeriesId).orElseThrow(() -> new ClassNotFoundException("PublisherSeries not found"));
+        return publisherSeriesRepository.findById(publisherSeriesId).orElseThrow(() -> new NotFoundException("PublisherSeries not found"));
     }
 }

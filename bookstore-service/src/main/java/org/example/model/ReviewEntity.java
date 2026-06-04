@@ -19,8 +19,9 @@ public class ReviewEntity {
     @JoinColumn(name = "book_id")
     private BookEntity book;
 
-    @Column(name = "reviewer_id")
-    private Integer reviewerId;
+    @ManyToOne
+    @JoinColumn(name = "reviewer_id")
+    private AccountEntity reviewer;
 
     @Column(name = "text")
     private String text;

@@ -32,10 +32,10 @@ VALUES
 INSERT INTO books (title, author_id, genre, publisher_id, series_id, price,
 isbn, release_date, description, pages, weight, review_count, average_rating)
 VALUES
-    ('Harry Potter and the Chamber of Secrets', 2, 'DRAMA', 1, 1, 500.00, '234-324-234-43', '2001-05-21 11:00:00', 'Description1', 400, 300.00, 40, 2),
-    ('I''m robot', 1, 'HORROR', 2, 2, 650.00, '213-231-679-67', '1950-05-21 11:00:00', 'Description2', 300, 300.00, 20, 5),
-    ('Child', 2, 'COMEDY', 2, 2, 1050.00, '335-456-245-54', '2001-06-13 19:00:00', 'Description3', 500, 700.00, 10, 3),
-    ('Cats and Dogs', 3, 'COMEDY', 3, 3, 1550.00, '341-234-567-89', '2019-09-05 14:00:00', 'Description4', 400, 500.00, 30, 5);
+    ('Harry Potter and the Chamber of Secrets', 2, 'DRAMA', 1, 1, 500.00, '234-324-234-43', '2001-05-21 11:00:00', 'Description1', 400, 300.00, 0, 0),
+    ('I''m robot', 1, 'HORROR', 2, 2, 650.00, '213-231-679-67', '1950-05-21 11:00:00', 'Description2', 300, 300.00, 0, 0),
+    ('Child', 2, 'COMEDY', 2, 2, 1050.00, '335-456-245-54', '2001-06-13 19:00:00', 'Description3', 500, 700.00, 0, 0),
+    ('Cats and Dogs', 3, 'COMEDY', 3, 3, 1550.00, '341-234-567-89', '2019-09-05 14:00:00', 'Description4', 400, 500.00, 0, 0);
 
 INSERT INTO basket_detail (basket_id, book_id, price, quantity)
 VALUES

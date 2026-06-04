@@ -5,7 +5,7 @@ import org.example.database.AccountApiRepository;
 import org.example.database.BasketDetailRepository;
 import org.example.database.BasketRepository;
 import org.example.database.BookApiRepository;
-import org.example.exeception.ClassNotFoundException;
+import org.example.exeception.NotFoundException;
 import org.example.mapper.BasketMapper;
 import org.example.mapper.BookMapper;
 import org.example.model.*;
@@ -172,14 +172,14 @@ public class AccountApiService implements AccountApiInterface {
     }
 
     private AccountEntity existAccountEntity(Integer id) {
-        return accountRepository.findById(id).orElseThrow(() -> new ClassNotFoundException("Account not found"));
+        return accountRepository.findById(id).orElseThrow(() -> new NotFoundException("Account not found"));
     }
 
     private BookEntity existBookEntity(Integer id) {
-        return bookRepository.findById(id).orElseThrow(() -> new ClassNotFoundException("Book not found"));
+        return bookRepository.findById(id).orElseThrow(() -> new NotFoundException("Book not found"));
     }
 
     private BasketDetailEntity existBasketDetailEntity(Integer id) {
-        return basketDetailRepository.findById(id).orElseThrow(() -> new ClassNotFoundException("Basket item not found"));
+        return basketDetailRepository.findById(id).orElseThrow(() -> new NotFoundException("Basket item not found"));
     }
 }

@@ -34,7 +34,6 @@ public class BasketEntity {
     @OneToMany(mappedBy = "basket", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     List<BasketDetailEntity> basketDetails = new ArrayList<>();
 
-    @OneToOne
-    @JoinColumn(name = "account_id")
+    @OneToOne(mappedBy = "basket")
     private AccountEntity account;
 }

@@ -1,9 +1,12 @@
 package org.example.service.review;
 
 import lombok.RequiredArgsConstructor;
+import org.example.database.AccountApiRepository;
+import org.example.database.AuthRepository;
 import org.example.database.BookApiRepository;
 import org.example.database.ReviewApiRepository;
-import org.example.exeception.ClassNotFoundException;
+import org.example.model.AuthEntity;
+import org.example.exeception.NotFoundException;
 import org.example.mapper.ReviewMapper;
 import org.example.model.*;
 import org.example.model.BookReview;
@@ -12,6 +15,7 @@ import org.example.model.ChangeReviewRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -22,8 +26,11 @@ import java.util.List;
 public class ReviewApiService implements ReviewApiInterface {
 
     private final ReviewApiRepository reviewRepository;
-    private final BookApiRepository bookApiRepository;
+    private final BookApiRepository bookRepository;
+    private final AccountApiRepository accountRepository;
+    private final AuthRepository authRepository;
     private final ReviewMapper reviewMapper;
+
 
     @Override
     public BookReview changeReview(Integer reviewId, ChangeReviewRequest changeReviewRequest) {
@@ -77,25 +84,40 @@ public class ReviewApiService implements ReviewApiInterface {
     public BookReview postReview(BookReviewInput bookReviewInput) {
         BookEntity bookEntity = existBookEntity(bookReviewInput.getBookId());
 
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+        System.out.println(email + "LOGIN");
+        AuthEntity authEntity = authRepository.findByEmail(email)
+                .orElseThrow(()-> new NotFoundException("Auth not found"));
         ReviewEntity review = new ReviewEntity();
         review.setBook(bookEntity);
         review.setText(bookReviewInput.getText());
         review.setRating(bookReviewInput.getRating());
-        review.setReviewerId(bookReviewInput.getReviewerId());
+
+        AccountEntity account = accountRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("Account not found"));
+        review.setReviewer(account);
+        //review.setReviewerId(authEntity.getId());
+        AuthEntity auth = authRepository.findByEmail(email).orElseThrow();
+
+        //review.setReviewer(auth.getAccount());
 
         reviewRepository.save(review);
-        bookEntity.setReviewCount(bookEntity.getReviewCount() + 1);
 
-        bookApiRepository.save(bookEntity);
+        bookEntity.setReviewCount(bookEntity.getReviewCount() + 1);
+        bookEntity.setAverageRating((bookEntity.getAverageRating() + bookReviewInput.getRating()) / bookEntity.getReviewCount());
+
+        bookRepository.save(bookEntity);
         return reviewMapper.toDto(review);
     }
 
     private ReviewEntity existReviewEntity(Integer reviewId) {
-        return reviewRepository.findById(reviewId).orElseThrow(() -> new ClassNotFoundException("Review not found"));
+        return reviewRepository.findById(reviewId).orElseThrow(() -> new NotFoundException("Review not found"));
     }
 
     private BookEntity existBookEntity(Integer bookId) {
-        return bookApiRepository.findById(bookId).orElseThrow(() -> new ClassNotFoundException("Book not found"));
+        return bookRepository.findById(bookId).orElseThrow(() -> new NotFoundException("Book not found"));
     }
 
 }

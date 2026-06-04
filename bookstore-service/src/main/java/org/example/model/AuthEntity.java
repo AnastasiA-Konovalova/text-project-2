@@ -19,4 +19,8 @@ public class AuthEntity {
 
     @Column(nullable = false)
     private String password;
+
+//    @OneToOne
+//    @JoinColumn(name = "account_id")
+//    private AccountEntity account;
 }

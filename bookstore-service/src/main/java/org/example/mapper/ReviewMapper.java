@@ -18,10 +18,11 @@ public class ReviewMapper {
         BookReview dto = new BookReview();
         dto.setId(review.getId());
         dto.setBook(bookMapper.toDto(review.getBook()));
+        dto.setReviewerId(review.getReviewer().getId());
         dto.setRating(review.getRating());
         dto.setText(review.getText());
-        if (review.getCreatedAt() != null) dto.setCreatedAt(LocalDateTime.now().atOffset(ZoneOffset.UTC));
-        if (review.getUpdatedAt() != null) dto.setUpdatedAt(LocalDateTime.now().atOffset(ZoneOffset.UTC));
+        if (review.getCreatedAt() == null) dto.setCreatedAt(LocalDateTime.now().atOffset(ZoneOffset.UTC));
+        if (review.getUpdatedAt() == null) dto.setUpdatedAt(LocalDateTime.now().atOffset(ZoneOffset.UTC));
 
         return dto;
     }

@@ -1,6 +1,7 @@
 package org.example.service.auth;
 
 import lombok.RequiredArgsConstructor;
+import org.example.database.AccountApiRepository;
 import org.example.database.AuthRepository;
 import org.example.model.*;
 import org.example.model.LoginUserRequest;
@@ -18,13 +19,14 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class AuthApiService implements AuthApiInterface {
 
-    private final AuthRepository repository;
+    private final AuthRepository authRepository;
+    private final AccountApiRepository accountRepository;
     private final PasswordEncoder encoder;
     private final JwtService jwtService;
 
     @Override
     public LoginUserResponse loginUser(LoginUserRequest request) {
-        AuthEntity user = repository.findByEmail(request.getEmail()).orElseThrow();
+        AuthEntity user = authRepository.findByEmail(request.getEmail()).orElseThrow();
         if (!encoder.matches(request.getPassword(), user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid password");
         }
@@ -53,6 +55,11 @@ public class AuthApiService implements AuthApiInterface {
 
         user.setPassword(encoder.encode(registerUserRequest.getPassword()));
 
-        repository.save(user);
+        authRepository.save(user);
+
+        AccountEntity account = new AccountEntity();
+        account.setEmail(registerUserRequest.getEmail());
+
+        accountRepository.save(account);
     }
 }

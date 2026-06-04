@@ -2,7 +2,7 @@ package org.example.service.author;
 
 import lombok.RequiredArgsConstructor;
 import org.example.database.AuthorRepository;
-import org.example.exeception.ClassNotFoundException;
+import org.example.exeception.NotFoundException;
 import org.example.mapper.AuthorMapper;
 import org.example.model.Author;
 import org.example.model.AuthorEntity;
@@ -38,6 +38,6 @@ public class AuthorApiService implements AuthorApiInterface {
     }
 
     private AuthorEntity existAuthorEntity(Integer authorId) {
-        return authorRepository.findById(authorId).orElseThrow(() -> new ClassNotFoundException("Author not found"));
+        return authorRepository.findById(authorId).orElseThrow(() -> new NotFoundException("Author not found"));
     }
 }

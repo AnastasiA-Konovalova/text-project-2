@@ -2,7 +2,7 @@ package org.example.service.book;
 
 import lombok.RequiredArgsConstructor;
 import org.example.database.BookApiRepository;
-import org.example.exeception.ClassNotFoundException;
+import org.example.exeception.NotFoundException;
 import org.example.mapper.BookMapper;
 import org.example.model.Book;
 import org.example.model.BookEntity;
@@ -68,6 +68,6 @@ public class BookApiService implements BookApiInterface {
     }
 
     private BookEntity existBookEntity(Integer id) {
-        return bookRepository.findById(id).orElseThrow(() -> new ClassNotFoundException("Book not found"));
+        return bookRepository.findById(id).orElseThrow(() -> new NotFoundException("Book not found"));
     }
 }
