@@ -15,6 +15,6 @@ public class OrderEntity {
     private Integer id;
 
     @ManyToOne
-    @JoinColumn(name = "account_id")
-    private AccountEntity account;
+    @JoinColumn(name = "user_id")
+    private UserEntity user;
 }

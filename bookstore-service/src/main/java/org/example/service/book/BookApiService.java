@@ -1,12 +1,15 @@
 package org.example.service.book;
 
 import lombok.RequiredArgsConstructor;
-import org.example.database.BookApiRepository;
-import org.example.exeception.NotFoundException;
+import org.example.database.BookRepository;
+import org.example.exception.NotFoundException;
 import org.example.mapper.BookMapper;
+import org.example.mapper.SortBookMapper;
+import org.example.model.*;
 import org.example.model.Book;
-import org.example.model.BookEntity;
 import org.example.model.Genre;
+import org.example.model.Order;
+import org.example.model.SortBook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -19,7 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BookApiService implements BookApiInterface {
 
-    private final BookApiRepository bookRepository;
+    private final BookRepository bookRepository;
     private final BookMapper bookMapper;
 
     @Override
@@ -28,22 +31,23 @@ public class BookApiService implements BookApiInterface {
                                Integer seriesId,
                                Integer publisherId,
                                Genre genre,
+                               SortBook sortBook,
                                String publisherName,
                                Boolean isPopular,
                                Boolean isNew,
+                               Order order,
                                Integer limit,
-                               Integer offset,
-                               String sortBook,
-                               String order) {
+                               Integer offset) {
         if (id != null) {
             existBookEntity(id);
         }
-        Sort sort;
-        if ("title".equalsIgnoreCase(sortBook)) sort = Sort.by("title");
-        else if ("price".equalsIgnoreCase(sortBook)) sort = Sort.by("price");
-        else sort = Sort.by("id");
+        Sort sort = Sort.by("id");
 
-        if ("desc".equalsIgnoreCase(order)) sort = sort.descending();
+        if (sortBook != null) {
+            sort = Sort.by(SortBookMapper.toField(sortBook));
+        }
+
+        if (order == Order.DESC) sort = sort.descending();
 
         PageRequest pageRequest = PageRequest.of(
                 offset / limit,
@@ -61,10 +65,9 @@ public class BookApiService implements BookApiInterface {
                 .and(BookSpecification.hasPublisherName(publisherName));
 
         Page<BookEntity> page = bookRepository.findAll(specification, pageRequest);
-        List<Book> books = page.getContent().stream()
+        return page.getContent().stream()
                 .map(bookMapper::toDto)
                 .toList();
-        return books;
     }
 
     private BookEntity existBookEntity(Integer id) {

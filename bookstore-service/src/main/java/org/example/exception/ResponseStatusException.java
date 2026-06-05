@@ -1,4 +1,4 @@
-package org.example.exeception;
+package org.example.exception;
 
 public class ResponseStatusException extends RuntimeException {
     public ResponseStatusException(String message) {

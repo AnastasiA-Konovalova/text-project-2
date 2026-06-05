@@ -1,4 +1,4 @@
-package org.example.service.jwt;
+package org.example.jwt.entry;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

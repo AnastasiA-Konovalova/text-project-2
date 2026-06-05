@@ -35,5 +35,5 @@ public class BasketEntity {
     List<BasketDetailEntity> basketDetails = new ArrayList<>();
 
     @OneToOne(mappedBy = "basket")
-    private AccountEntity account;
+    private UserEntity user;
 }

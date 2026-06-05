@@ -6,7 +6,7 @@ VALUES
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-INSERT INTO accounts (basket_id, name, surname, middle_name, email, phone_number, password)
+INSERT INTO users (basket_id, name, surname, middle_name, email, phone_number, password)
 VALUES
     (1, 'Ivan', 'Ivanov', 'Ivanovich', 'email1@mail.ru', '+7952346670', crypt('password1', gen_salt('bf'))),
     (2, 'Petr', 'Petrov', NULL, 'email2@mail.ru', '+7923579935', crypt('password2', gen_salt('bf')));
@@ -47,17 +47,17 @@ VALUES
     (1, 1, 'Good', 4, '2010-05-21 11:00:00','2015-06-23 11:34:00'),
     (2, 2, 'Awesome', 5, '2020-10-21 12:00:00',NULL);
 
-INSERT INTO favorite_books (account_id, book_id)
+INSERT INTO favorite_books (user_id, book_id)
 VALUES
     (1, 1),
     (2, 2);
 
-INSERT INTO orders (account_id, recipient_name, created_at, updated_at)
+INSERT INTO orders (user_id, recipient_name, created_at, updated_at)
 VALUES
     (1, 'Ivan Ivanov', '2025-03-19 11:00:00', NULL),
     (2, 'Ivan Petrov', '2026-09-19 20:00:00', NULL);
 
-INSERT INTO auth (email, password)
-VALUES
-    ('email@email', '324567'),
-    ('email2@email', 'DFRFS#4455e7')
+--INSERT INTO auth (email, password)
+--VALUES
+--    ('email@email', '324567'),
+--    ('email2@email', 'DFRFS#4455e7')

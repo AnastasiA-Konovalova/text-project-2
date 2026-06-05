@@ -21,7 +21,7 @@ public class ReviewEntity {
 
     @ManyToOne
     @JoinColumn(name = "reviewer_id")
-    private AccountEntity reviewer;
+    private UserEntity reviewer;
 
     @Column(name = "text")
     private String text;

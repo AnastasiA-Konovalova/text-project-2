@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.model.Book;
 import org.example.api.BookApi;
 import org.example.model.Genre;
+import org.example.model.Order;
+import org.example.model.SortBook;
 import org.example.service.book.BookApiInterface;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,13 +24,13 @@ public class BooksApiImpl implements BookApi {
                                                Integer seriesId,
                                                Integer publisherId,
                                                Genre genre,
+                                               SortBook sortBook,
                                                String publisherName,
                                                Boolean isPopular,
                                                Boolean isNew,
+                                               Order order,
                                                Integer limit,
-                                               Integer offset,
-                                               String sortBook,
-                                               String order) {
-        return ResponseEntity.ok(bookInterface.getBooks(id, authorId, seriesId, publisherId, genre, publisherName, isPopular, isNew, limit, offset, sortBook, order));
+                                               Integer offset) {
+        return ResponseEntity.ok(bookInterface.getBooks(id, authorId, seriesId, publisherId, genre, sortBook, publisherName, isPopular, isNew, order, limit, offset));
     }
 }

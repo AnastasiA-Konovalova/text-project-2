@@ -2,7 +2,7 @@ package org.example.service.author;
 
 import lombok.RequiredArgsConstructor;
 import org.example.database.AuthorRepository;
-import org.example.exeception.NotFoundException;
+import org.example.exception.NotFoundException;
 import org.example.mapper.AuthorMapper;
 import org.example.model.Author;
 import org.example.model.AuthorEntity;

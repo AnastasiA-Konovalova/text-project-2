@@ -2,7 +2,7 @@ package org.example.service.publisher;
 
 import lombok.RequiredArgsConstructor;
 import org.example.database.PublisherRepository;
-import org.example.exeception.NotFoundException;
+import org.example.exception.NotFoundException;
 import org.example.mapper.PublisherMapper;
 import org.example.model.Publisher;
 import org.example.model.PublisherEntity;

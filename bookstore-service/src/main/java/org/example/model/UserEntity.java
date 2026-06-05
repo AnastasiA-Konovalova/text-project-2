@@ -9,11 +9,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Table(name = "accounts")
+@Table(name = "users")
 @Getter
 @Setter
 @Entity
-public class AccountEntity {
+public class UserEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,7 +39,7 @@ public class AccountEntity {
     @ManyToMany
     @JoinTable(
             name = "favorite_books",
-            joinColumns = @JoinColumn(name = "account_id"),
+            joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "book_id")
     )
     private Set<BookEntity> favoriteBooks = new HashSet<>();
@@ -49,7 +49,7 @@ public class AccountEntity {
     private BasketEntity basket;
 
     @OneToMany(
-            mappedBy = "account",
+            mappedBy = "user",
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )

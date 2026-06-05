@@ -2,9 +2,12 @@ package org.example.controller.review;
 
 import lombok.RequiredArgsConstructor;
 import org.example.api.ReviewApi;
+import org.example.model.*;
 import org.example.model.BookReview;
 import org.example.model.BookReviewInput;
 import org.example.model.ChangeReviewRequest;
+import org.example.model.Order;
+import org.example.model.SortReview;
 import org.example.service.review.ReviewApiInterface;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,13 +33,13 @@ public class ReviewApiImpl implements ReviewApi {
     }
 
     @Override
-    public ResponseEntity<BookReview> getBookReviewById(Integer bookReviewId) {
-        return ResponseEntity.ok(reviewInterface.getBookReviewById(bookReviewId));
+    public ResponseEntity<BookReview> getBookReviewById(Integer reviewId) {
+        return ResponseEntity.ok(reviewInterface.getBookReviewById(reviewId));
     }
 
     @Override
-    public ResponseEntity<List<BookReview>> getReviews(Integer bookId, Integer limit, Integer offset, String sortBook, String order) {
-        return ResponseEntity.ok(reviewInterface.getReviews(bookId,limit, offset, sortBook, order));
+    public ResponseEntity<List<BookReview>> getReviews(Integer bookId, SortReview sortReview, Order order, Integer limit, Integer offset) {
+        return ResponseEntity.ok(reviewInterface.getReviews(bookId,sortReview, order, limit, offset));
     }
 
     @Override

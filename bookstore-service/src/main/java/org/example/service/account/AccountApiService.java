@@ -1,17 +1,20 @@
 package org.example.service.account;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.example.database.AccountApiRepository;
-import org.example.database.BasketDetailRepository;
-import org.example.database.BasketRepository;
-import org.example.database.BookApiRepository;
-import org.example.exeception.NotFoundException;
+import org.example.database.*;
+import org.example.exception.NotFoundException;
+import org.example.exception.UserDoesNotOwnDataException;
 import org.example.mapper.BasketMapper;
 import org.example.mapper.BookMapper;
 import org.example.model.*;
 import org.example.model.Basket;
 import org.example.model.Book;
 import org.example.model.BookIdRequest;
+import org.example.model.Order;
+import org.example.model.SortBook;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -21,42 +24,48 @@ import java.util.*;
 @RequiredArgsConstructor
 public class AccountApiService implements AccountApiInterface {
 
-    public final AccountApiRepository accountRepository;
-    public final BookApiRepository bookRepository;
-    public final BasketRepository basketRepository;
+    private final BookRepository bookRepository;
+    private final BasketRepository basketRepository;
+    private final UserRepository userRepository;
     private final BasketDetailRepository basketDetailRepository;
     private final BookMapper bookMapper;
     private final BasketMapper basketMapper;
 
-    public List<Book> addFavoriteBook(Integer bookId, Integer id) {
+    @Transactional
+    public List<Book> addFavoriteBook(Integer bookId) {
         BookEntity bookEntity = existBookEntity(bookId);
-        AccountEntity accountEntity = existAccountEntity(id);
 
-        accountEntity.getFavoriteBooks().add(bookEntity);
+        String email = authenticationUser();
+        UserEntity user = existUserEntity(email);
 
-        accountRepository.save(accountEntity);
+        user.getFavoriteBooks().add(bookEntity);
 
-        return accountEntity.getFavoriteBooks()
+        userRepository.save(user);
+
+        return user.getFavoriteBooks()
                 .stream()
                 .map(bookMapper::toDto)
                 .toList();
     }
 
     @Override
-    public List<Book> getFavoriteBooks(Integer accountId,
-                                             Integer limit,
-                                             Integer offset,
-                                             String sortBook,
-                                             String order) {
-        AccountEntity account = existAccountEntity(accountId);
+    public List<Book> getFavoriteBooks(SortBook sortBook, Order order, Integer limit, Integer offset) {
+        String email = authenticationUser();
+        UserEntity user = existUserEntity(email);
 
-        Set<BookEntity> books = account.getFavoriteBooks();
+        Set<BookEntity> books = user.getFavoriteBooks();
 
-        Comparator<BookEntity> comparator;
-        if ("title".equalsIgnoreCase(sortBook)) comparator = Comparator.comparing(BookEntity::getTitle);
-        else comparator = Comparator.comparing(BookEntity::getId);
+        Comparator<BookEntity> comparator = Comparator.comparing(BookEntity::getId);
 
-        if ("desc".equalsIgnoreCase(order)) comparator = comparator.reversed();
+        if (sortBook != null) {
+            comparator = switch (sortBook) {
+                case ID -> Comparator.comparing(BookEntity::getId);
+                case TITLE -> Comparator.comparing(BookEntity::getTitle);
+                case PRICE -> Comparator.comparing(BookEntity::getPrice);
+            };
+        }
+
+        if (order == Order.DESC) comparator = comparator.reversed();
 
         return books.stream()
                 .sorted(comparator)
@@ -67,17 +76,20 @@ public class AccountApiService implements AccountApiInterface {
         }
 
     @Override
-    public Basket addToBasket(BookIdRequest bookIdRequest, Integer accountId) {
+    public Basket addToBasket(BookIdRequest bookIdRequest) {
         BookEntity book = existBookEntity(bookIdRequest.getBookId());
-        AccountEntity account = existAccountEntity(accountId);
 
-        BasketEntity basket = account.getBasket();
+        String email = authenticationUser();
+
+        UserEntity user = existUserEntity(email);
+
+        BasketEntity basket = user.getBasket();
 
         if (basket == null) {
             basket = new BasketEntity();
-            basket.setAccount(account);
+            basket.setUser(user);
             basket.setBasketDetails(new ArrayList<>());
-            account.setBasket(basket);
+            user.setBasket(basket);
         }
 
         BasketDetailEntity existing = basket.getBasketDetails()
@@ -112,25 +124,34 @@ public class AccountApiService implements AccountApiInterface {
     }
 
     @Override
-    public Basket getBasket(Integer accountId) {
-        AccountEntity account = existAccountEntity(accountId);
-        BasketEntity basketEntity = account.getBasket();
+    public Basket getBasket() {
+        String email = authenticationUser();
+
+        UserEntity user = existUserEntity(email);
+
+        BasketEntity basketEntity = user.getBasket();
 
         return basketMapper.toDto(basketEntity);
     }
 
     @Override
-    public List<Book> getPurchasedBooks(Integer limit, Integer offset, String sortBook, String order, Integer accountId) {
-        AccountEntity account = existAccountEntity(accountId);
-        Set<BookEntity> books = account.getFavoriteBooks();
+    public List<Book> getPurchasedBooks(Order order, Integer limit, Integer offset, SortBook sortBook) {
+        String email = authenticationUser();
 
-        Comparator<BookEntity> comparator;
+        UserEntity user = existUserEntity(email);
 
-        if ("title".equalsIgnoreCase(sortBook)) comparator = Comparator.comparing(BookEntity::getTitle);
-        else if("id".equalsIgnoreCase(sortBook)) comparator =  Comparator.comparing(BookEntity:: getId);
-        else comparator = Comparator.comparing(BookEntity::getPrice);
+        Set<BookEntity> books = user.getFavoriteBooks();
 
-        if ("desc".equalsIgnoreCase(order)) comparator = comparator.reversed();
+        Comparator<BookEntity> comparator = Comparator.comparing(BookEntity::getId);
+        if (sortBook != null) {
+            comparator = switch (sortBook) {
+                case TITLE -> Comparator.comparing(BookEntity::getTitle);
+                case ID -> Comparator.comparing(BookEntity::getId);
+                case PRICE -> Comparator.comparing(BookEntity::getPrice);
+            };
+        }
+
+        if (order == Order.DESC) comparator = comparator.reversed();
 
         return books.stream()
                 .sorted(comparator)
@@ -142,7 +163,13 @@ public class AccountApiService implements AccountApiInterface {
 
     @Override
     public void removeBasketItem(Integer itemId) {
+        String email = authenticationUser();
+
         BasketDetailEntity detail = existBasketDetailEntity(itemId);
+
+        if (!detail.getBasket().getUser().getEmail().equals(email)) {
+            throw new UserDoesNotOwnDataException("User doesn't owner data");
+        }
 
         BasketEntity basket = detail.getBasket();
 
@@ -171,8 +198,13 @@ public class AccountApiService implements AccountApiInterface {
         basket.setQuantityBooks(quantity);
     }
 
-    private AccountEntity existAccountEntity(Integer id) {
-        return accountRepository.findById(id).orElseThrow(() -> new NotFoundException("Account not found"));
+    private String authenticationUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication.getName();
+    }
+
+    private UserEntity existUserEntity(String email) {
+        return userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
     }
 
     private BookEntity existBookEntity(Integer id) {

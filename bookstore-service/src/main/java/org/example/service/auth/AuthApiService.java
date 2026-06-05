@@ -1,8 +1,7 @@
 package org.example.service.auth;
 
 import lombok.RequiredArgsConstructor;
-import org.example.database.AccountApiRepository;
-import org.example.database.AuthRepository;
+import org.example.database.UserRepository;
 import org.example.model.*;
 import org.example.model.LoginUserRequest;
 import org.example.model.LoginUserResponse;
@@ -19,14 +18,13 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class AuthApiService implements AuthApiInterface {
 
-    private final AuthRepository authRepository;
-    private final AccountApiRepository accountRepository;
+    private final UserRepository userRepository;
     private final PasswordEncoder encoder;
     private final JwtService jwtService;
 
     @Override
     public LoginUserResponse loginUser(LoginUserRequest request) {
-        AuthEntity user = authRepository.findByEmail(request.getEmail()).orElseThrow();
+        UserEntity user = userRepository.findByEmail(request.getEmail()).orElseThrow();
         if (!encoder.matches(request.getPassword(), user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid password");
         }
@@ -50,16 +48,15 @@ public class AuthApiService implements AuthApiInterface {
 
     @Override
     public void registerUser(RegisterUserRequest registerUserRequest) {
-        AuthEntity user = new AuthEntity();
-        user.setEmail(registerUserRequest.getEmail());
+        UserEntity user = new UserEntity();
 
+        user.setName(registerUserRequest.getName());
+        user.setSurname(registerUserRequest.getSurname());
+        user.setMiddleName(registerUserRequest.getMiddleName());
+        user.setEmail(registerUserRequest.getEmail());
+        user.setPhoneNumber(registerUserRequest.getPhoneNumber());
         user.setPassword(encoder.encode(registerUserRequest.getPassword()));
 
-        authRepository.save(user);
-
-        AccountEntity account = new AccountEntity();
-        account.setEmail(registerUserRequest.getEmail());
-
-        accountRepository.save(account);
+        userRepository.save(user);
     }
 }

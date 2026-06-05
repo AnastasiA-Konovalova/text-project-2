@@ -1,20 +1,21 @@
 package org.example.service.review;
 
 import lombok.RequiredArgsConstructor;
-import org.example.database.AccountApiRepository;
-import org.example.database.AuthRepository;
-import org.example.database.BookApiRepository;
-import org.example.database.ReviewApiRepository;
-import org.example.model.AuthEntity;
-import org.example.exeception.NotFoundException;
+import org.example.database.*;
+import org.example.exception.NotFoundException;
+import org.example.exception.UserDoesNotOwnDataException;
 import org.example.mapper.ReviewMapper;
+import org.example.mapper.SortReviewMapper;
 import org.example.model.*;
 import org.example.model.BookReview;
 import org.example.model.BookReviewInput;
 import org.example.model.ChangeReviewRequest;
+import org.example.model.Order;
+import org.example.model.SortReview;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -25,46 +26,56 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReviewApiService implements ReviewApiInterface {
 
-    private final ReviewApiRepository reviewRepository;
-    private final BookApiRepository bookRepository;
-    private final AccountApiRepository accountRepository;
-    private final AuthRepository authRepository;
+    private final ReviewRepository reviewRepository;
+    private final BookRepository bookRepository;
+    private final UserRepository userRepository;
     private final ReviewMapper reviewMapper;
 
 
     @Override
     public BookReview changeReview(Integer reviewId, ChangeReviewRequest changeReviewRequest) {
-        ReviewEntity reviewEntity = existReviewEntity(reviewId);
+        String email = authenticationReview();
 
-        if (changeReviewRequest.getRating() != null) reviewEntity.setRating(changeReviewRequest.getRating());
-        if (changeReviewRequest.getText() != null) reviewEntity.setText(changeReviewRequest.getText());
-        reviewEntity.setUpdatedAt(LocalDateTime.now());
-        reviewRepository.save(reviewEntity);
-        return reviewMapper.toDto(reviewEntity);
+        ReviewEntity review = existReviewEntity(reviewId);
+        checkOwner(review, email);
+
+        if (changeReviewRequest.getRating() != null) review.setRating(changeReviewRequest.getRating());
+        if (changeReviewRequest.getText() != null) review.setText(changeReviewRequest.getText());
+        review.setUpdatedAt(LocalDateTime.now());
+        reviewRepository.save(review);
+        return reviewMapper.toDto(review);
     }
 
     @Override
     public void deleteReviewById(Integer reviewId) {
-        existReviewEntity(reviewId);
+        String email = authenticationReview();
+
+        ReviewEntity review = existReviewEntity(reviewId);
+        checkOwner(review, email);
+
         reviewRepository.deleteById(reviewId);
     }
 
     @Override
-    public BookReview getBookReviewById(Integer bookReviewId) {
-        ReviewEntity reviewEntity = existReviewEntity(bookReviewId);
-        return reviewMapper.toDto(reviewEntity);
+    public BookReview getBookReviewById(Integer reviewId) {
+        String email = authenticationReview();
+
+        ReviewEntity review = existReviewEntity(reviewId);
+        checkOwner(review, email);
+
+        return reviewMapper.toDto(review);
     }
 
     @Override
-    public List<BookReview> getReviews(Integer bookId, Integer limit, Integer offset, String sortBook, String order) {
+    public List<BookReview> getReviews(Integer bookId, SortReview sortReview, Order order, Integer limit, Integer offset) {
         existBookEntity(bookId);
 
-        Sort sort;
-        if ("reviewerId".equalsIgnoreCase(sortBook)) sort = Sort.by("reviewerId");
-        else if ("rating".equalsIgnoreCase(sortBook)) sort = Sort.by("rating");
-        else sort = Sort.by("id");
+        Sort sort = Sort.by("id");
 
-        if ("desc".equalsIgnoreCase(order)) sort = sort.descending();
+        if (sortReview != null) {
+            sort = Sort.by(SortReviewMapper.toField(sortReview));
+        }
+        if (order == Order.DESC) sort = sort.descending();
 
         PageRequest pageRequest = PageRequest.of(
                 offset / limit,
@@ -82,26 +93,18 @@ public class ReviewApiService implements ReviewApiInterface {
 
     @Override
     public BookReview postReview(BookReviewInput bookReviewInput) {
+        String email = authenticationReview();
+
         BookEntity bookEntity = existBookEntity(bookReviewInput.getBookId());
 
-        String email = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
-        System.out.println(email + "LOGIN");
-        AuthEntity authEntity = authRepository.findByEmail(email)
-                .orElseThrow(()-> new NotFoundException("Auth not found"));
         ReviewEntity review = new ReviewEntity();
         review.setBook(bookEntity);
         review.setText(bookReviewInput.getText());
         review.setRating(bookReviewInput.getRating());
 
-        AccountEntity account = accountRepository.findByEmail(email)
+        UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("Account not found"));
-        review.setReviewer(account);
-        //review.setReviewerId(authEntity.getId());
-        AuthEntity auth = authRepository.findByEmail(email).orElseThrow();
-
-        //review.setReviewer(auth.getAccount());
+        review.setReviewer(user);
 
         reviewRepository.save(review);
 
@@ -120,4 +123,14 @@ public class ReviewApiService implements ReviewApiInterface {
         return bookRepository.findById(bookId).orElseThrow(() -> new NotFoundException("Book not found"));
     }
 
+    private String authenticationReview() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication.getName();
+    }
+
+    private void checkOwner(ReviewEntity review, String email) {
+        if (!review.getReviewer().getEmail().equals(email)) {
+            throw new UserDoesNotOwnDataException("User doesn't data owner");
+        }
+    }
 }
