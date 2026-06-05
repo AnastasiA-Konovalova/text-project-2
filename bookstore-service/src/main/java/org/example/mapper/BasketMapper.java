@@ -28,8 +28,13 @@ public class BasketMapper {
                 .sum();
         dto.setQuantityBooks(quantityBooks);
         dto.setTotalPrice(basket.getTotalPrice());
-        dto.setCreatedAt(basket.getCreatedAt().atOffset(ZoneOffset.UTC));
-        dto.setUpdatedAt(basket.getUpdatedAt().atOffset(ZoneOffset.UTC));
+        if (basket.getCreatedAt() != null) {
+            dto.setCreatedAt(basket.getCreatedAt().atOffset(ZoneOffset.UTC));
+        }
+
+        if (basket.getUpdatedAt() != null) {
+            dto.setUpdatedAt(basket.getUpdatedAt().atOffset(ZoneOffset.UTC));
+        }
 
         return dto;
     }
