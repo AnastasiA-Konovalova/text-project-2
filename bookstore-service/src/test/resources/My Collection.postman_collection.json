@@ -45,7 +45,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n\t\"email\": \"email3@email\",\n    \"password\": \"324567\"\n}",
+              "raw": "{\n\t\"email\": \"email3@email\",\n    \"password\": \"123456789\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -88,8 +88,12 @@
             {
               "listen": "prerequest",
               "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
                 "packages": {},
-                "type": "text/javascript"
+                "requests": {}
               }
             }
           ],
@@ -109,7 +113,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n\t\"email\": \"email3@email\",\n    \"password\": \"324567\"\n}",
+              "raw": "{\n\t\"name\": \"Olga\",\n    \"surname\": \"Landau\",\n    \"middle_name\": \"Nikolaevna\",\n    \"email\": \"email3@email\",\n    \"phone_number\": \"+78965423640\",\n    \"password\": \"123456789\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -172,52 +176,6 @@
               "path": [
                 "auth",
                 "logout"
-              ]
-            },
-            "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
-          },
-          "response": []
-        },
-        {
-          "name": "authRegisterPost",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Successful POST request\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
-                  "});",
-                  ""
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n\t\"email\": \"email\",\n    \"password\": \"324567\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "http://localhost:8080/auth/register",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8080",
-              "path": [
-                "auth",
-                "register"
               ]
             },
             "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
@@ -539,9 +497,54 @@
                 "packages": {},
                 "requests": {}
               }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const loginRequest = {",
+                  "    url: 'http://localhost:8081/auth/login',",
+                  "    method: 'POST',",
+                  "    header: {",
+                  "        'Content-Type': 'application/json'",
+                  "    },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ email: 'email3@email', password: '324567' })",
+                  "    }",
+                  "};",
+                  "",
+                  "pm.sendRequest(loginRequest, function (err, response) {",
+                  "    if (err) {",
+                  "        console.error('Login failed:', err);",
+                  "        return;",
+                  "    }",
+                  "    const json = response.json();",
+                  "    const token = json.token || json.accessToken || json.access_token;",
+                  "    if (token) {",
+                  "        pm.collectionVariables.set('authToken', token);",
+                  "    } else {",
+                  "        console.error('No token found in login response:', JSON.stringify(json));",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlbWFpbDNAZW1haWwiLCJpYXQiOjE3ODA2NTI5MDQsImV4cCI6MTc4MDczOTMwNH0.OoOnvPO-K7uyGXO5uMq8gSKWBjnAlSixnj_pwPtCGUQ",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [
               {
@@ -557,7 +560,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n\t\"bookId\": 2,\n    \"text\": \"bookText\",\n    \"rating\": 5,\n    \"reviewerId\": 2\n}",
+              "raw": "{\n\t\"bookId\": 1,\n    \"text\": \"review1\",\n    \"rating\": 5\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -598,6 +601,16 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlbWFpbDNAZW1haWwiLCJpYXQiOjE3ODA2NTg2NTcsImV4cCI6MTc4MDc0NTA1N30.A-jcKiVRbuecosoBHBNf7PAOlj01IqWLmWL1mm3ahdo",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "PATCH",
             "header": [
               {
@@ -613,7 +626,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"text\": \"newBookText\",\n    \"rating\": 4\n}",
+              "raw": "{\n    \"text\": \"newBookText\",\n    \"rating\": 3\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -657,6 +670,16 @@
             "disableBodyPruning": true
           },
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlbWFpbDNAZW1haWwiLCJpYXQiOjE3ODA2NTg2NTcsImV4cCI6MTc4MDc0NTA1N30.A-jcKiVRbuecosoBHBNf7PAOlj01IqWLmWL1mm3ahdo",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "body": {
@@ -664,15 +687,15 @@
               "raw": ""
             },
             "url": {
-              "raw": "http://localhost:8081/review/1",
+              "raw": "http://localhost:8081/reviews/6",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8081",
               "path": [
-                "review",
-                "1"
+                "reviews",
+                "6"
               ]
             }
           },
@@ -706,6 +729,16 @@
         {
           "name": "deleteReviewById",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlbWFpbDNAZW1haWwiLCJpYXQiOjE3ODA2NTg2NTcsImV4cCI6MTc4MDc0NTA1N30.A-jcKiVRbuecosoBHBNf7PAOlj01IqWLmWL1mm3ahdo",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [
               {
@@ -721,18 +754,17 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n\t\"bookId\": 2,\n    \"text\": \"bookText\",\n    \"rating\": 5,\n    \"reviewerId\": 2\n}"
+              "raw": ""
             },
             "url": {
-              "raw": "http://localhost:8081/review/7",
+              "raw": "http://localhost:8081/review",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8081",
               "path": [
-                "review",
-                "7"
+                "review"
               ]
             }
           },
@@ -762,6 +794,16 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlbWFpbDNAZW1haWwiLCJpYXQiOjE3ODA2NTI5MDQsImV4cCI6MTc4MDczOTMwNH0.OoOnvPO-K7uyGXO5uMq8gSKWBjnAlSixnj_pwPtCGUQ",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [
               {
@@ -785,7 +827,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8081/account/favorite?accountId=1&bookId=2",
+              "raw": "http://localhost:8081/account/favorite?bookId=2",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -796,10 +838,6 @@
                 "favorite"
               ],
               "query": [
-                {
-                  "key": "accountId",
-                  "value": "1"
-                },
                 {
                   "key": "bookId",
                   "value": "2"
@@ -829,6 +867,16 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlbWFpbDNAZW1haWwiLCJpYXQiOjE3ODA2NTI5MDQsImV4cCI6MTc4MDczOTMwNH0.OoOnvPO-K7uyGXO5uMq8gSKWBjnAlSixnj_pwPtCGUQ",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [
               {
@@ -852,7 +900,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8081/account/basket/items?accountId=2",
+              "raw": "http://localhost:8081/account/basket/items",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -862,12 +910,6 @@
                 "account",
                 "basket",
                 "items"
-              ],
-              "query": [
-                {
-                  "key": "accountId",
-                  "value": "2"
-                }
               ]
             },
             "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
@@ -875,7 +917,7 @@
           "response": []
         },
         {
-          "name": "postPurchasedBooks",
+          "name": "getPurchasedBooks",
           "event": [
             {
               "listen": "test",
@@ -893,6 +935,16 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlbWFpbDNAZW1haWwiLCJpYXQiOjE3ODA2NTI5MDQsImV4cCI6MTc4MDczOTMwNH0.OoOnvPO-K7uyGXO5uMq8gSKWBjnAlSixnj_pwPtCGUQ",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [
               {
@@ -908,7 +960,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n\t\"bookId\": 1\n}",
+              "raw": "",
               "options": {
                 "raw": {
                   "language": "json"
@@ -950,6 +1002,16 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlbWFpbDNAZW1haWwiLCJpYXQiOjE3ODA2NTI5MDQsImV4cCI6MTc4MDczOTMwNH0.OoOnvPO-K7uyGXO5uMq8gSKWBjnAlSixnj_pwPtCGUQ",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [
               {
@@ -973,7 +1035,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8081/account/favorite?accountId=1",
+              "raw": "http://localhost:8081/account/favorite",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -982,12 +1044,6 @@
               "path": [
                 "account",
                 "favorite"
-              ],
-              "query": [
-                {
-                  "key": "accountId",
-                  "value": "1"
-                }
               ]
             },
             "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
@@ -997,10 +1053,20 @@
         {
           "name": "getBasket",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlbWFpbDNAZW1haWwiLCJpYXQiOjE3ODA2NTI5MDQsImV4cCI6MTc4MDczOTMwNH0.OoOnvPO-K7uyGXO5uMq8gSKWBjnAlSixnj_pwPtCGUQ",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8081/account/basket?accountId=1",
+              "raw": "http://localhost:8081/account/basket",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -1009,12 +1075,6 @@
               "path": [
                 "account",
                 "basket"
-              ],
-              "query": [
-                {
-                  "key": "accountId",
-                  "value": "1"
-                }
               ]
             }
           },
@@ -1023,10 +1083,20 @@
         {
           "name": "deleteBookInBasket",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlbWFpbDNAZW1haWwiLCJpYXQiOjE3ODA2NTI5MDQsImV4cCI6MTc4MDczOTMwNH0.OoOnvPO-K7uyGXO5uMq8gSKWBjnAlSixnj_pwPtCGUQ",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8081/account/basket/items/4",
+              "raw": "http://localhost:8081/account/basket/items/1",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -1036,7 +1106,7 @@
                 "account",
                 "basket",
                 "items",
-                "4"
+                "1"
               ]
             }
           },
@@ -1137,6 +1207,12 @@
         "description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
       },
       "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "authToken",
+      "value": ""
     }
   ]
 }
