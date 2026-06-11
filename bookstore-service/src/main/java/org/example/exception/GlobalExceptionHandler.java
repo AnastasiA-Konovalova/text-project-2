@@ -28,4 +28,22 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(error);
     }
+
+    @ExceptionHandler(UserDoesNotOwnDataException.class)
+    public ResponseEntity<Error> handle(UserDoesNotOwnDataException ex) {
+        Error error = new Error();
+        error.setMessage(ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(error);
+    }
+
+    @ExceptionHandler(UserAlreadyExists.class)
+    public ResponseEntity<Error> handle(UserAlreadyExists ex) {
+        Error error = new Error();
+        error.setMessage(ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
+    }
 }

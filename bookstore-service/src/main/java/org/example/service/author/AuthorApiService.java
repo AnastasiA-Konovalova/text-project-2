@@ -8,7 +8,6 @@ import org.example.model.Author;
 import org.example.model.AuthorEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -28,8 +27,7 @@ public class AuthorApiService implements AuthorApiInterface {
     public List<Author> getPopularAuthors(Integer limit, Integer offset) {
         List<AuthorEntity> authors = authorRepository.findAll();
 
-        Comparator<AuthorEntity> comparator;
-
+        //Comparator<AuthorEntity> comparator;
         return authors.stream()
                 .map(authorMapper::toDto)
                 .skip(offset)

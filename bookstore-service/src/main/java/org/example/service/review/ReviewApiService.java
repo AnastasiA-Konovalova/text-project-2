@@ -42,6 +42,7 @@ public class ReviewApiService implements ReviewApiInterface {
         if (changeReviewRequest.getRating() != null) review.setRating(changeReviewRequest.getRating());
         if (changeReviewRequest.getText() != null) review.setText(changeReviewRequest.getText());
         review.setUpdatedAt(LocalDateTime.now());
+
         reviewRepository.save(review);
         return reviewMapper.toDto(review);
     }
@@ -59,10 +60,10 @@ public class ReviewApiService implements ReviewApiInterface {
     @Override
     public BookReview getBookReviewById(Integer reviewId) {
         String email = authenticationReview();
-
+        System.out.println(email);
         ReviewEntity review = existReviewEntity(reviewId);
+        System.out.println(review);
         checkOwner(review, email);
-
         return reviewMapper.toDto(review);
     }
 
@@ -130,6 +131,8 @@ public class ReviewApiService implements ReviewApiInterface {
 
     private void checkOwner(ReviewEntity review, String email) {
         if (!review.getReviewer().getEmail().equals(email)) {
+            System.out.println(review.getReviewer().getEmail());
+            System.out.println(email);
             throw new UserDoesNotOwnDataException("User doesn't data owner");
         }
     }

@@ -653,6 +653,60 @@ paths:
                 $ref: '#/components/schemas/Error'
 
   /review:
+    get:
+      tags:
+        - review
+
+      summary: Список отзывов
+      description: Вывод списка отзывов
+      operationId: getReviews
+
+      parameters:
+        - in: query
+          name: bookId
+          description: ID книги
+          schema:
+            type: integer
+
+        - in: query
+          name: sortReview
+          description: Сортировка отзывов
+          schema:
+            $ref: '#/components/schemas/SortReview'
+
+        - in: query
+          name: order
+          description: Упорядочивание отзывов
+          schema:
+            $ref: '#/components/schemas/Order'
+
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+
+      responses:
+        '200':
+          description: Список отзывов по книге
+
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookReview'
+
+        '4XX':
+          description: Клиентская ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
     post:
       tags:
         - review
@@ -693,7 +747,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /reviews/{reviewId}:
+
+
+  /review/{reviewId}:
     get:
       tags:
         - review
@@ -782,7 +838,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /review/{reviewId}:
     delete:
       tags:
         - review
@@ -895,60 +950,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /reviews:
-    get:
-      tags:
-        - review
 
-      summary: Список отзывов
-      description: Вывод списка отзывов
-      operationId: getReviews
-
-      parameters:
-        - in: query
-          name: bookId
-          description: ID книги
-          schema:
-            type: integer
-
-        - in: query
-          name: sortReview
-          description: Сортировка отзывов
-          schema:
-            $ref: '#/components/schemas/SortReview'
-
-        - in: query
-          name: order
-          description: Упорядочивание отзывов
-          schema:
-            $ref: '#/components/schemas/Order'
-
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-
-      responses:
-        '200':
-          description: Список отзывов по книге
-
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/BookReview'
-
-        '4XX':
-          description: Клиентская ошибка
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '5XX':
-          description: Внутренняя ошибка сервера
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
 
 
 
@@ -1477,4 +1479,3 @@ components:
       properties:
         message:
           type: string
-

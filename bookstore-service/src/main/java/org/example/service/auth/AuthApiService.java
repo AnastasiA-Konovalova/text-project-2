@@ -2,6 +2,8 @@ package org.example.service.auth;
 
 import lombok.RequiredArgsConstructor;
 import org.example.database.UserRepository;
+import org.example.exception.NotFoundException;
+import org.example.exception.UserAlreadyExists;
 import org.example.model.*;
 import org.example.model.LoginUserRequest;
 import org.example.model.LoginUserResponse;
@@ -24,7 +26,7 @@ public class AuthApiService implements AuthApiInterface {
 
     @Override
     public LoginUserResponse loginUser(LoginUserRequest request) {
-        UserEntity user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        UserEntity user = existUserEntity(request.getEmail());
         if (!encoder.matches(request.getPassword(), user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid password");
         }
@@ -48,6 +50,9 @@ public class AuthApiService implements AuthApiInterface {
 
     @Override
     public void registerUser(RegisterUserRequest registerUserRequest) {
+        if (userRepository.findByEmail(registerUserRequest.getEmail()).isPresent()) throw new UserAlreadyExists("User with email " + registerUserRequest.getEmail() +
+                " already exits in data base");
+
         UserEntity user = new UserEntity();
 
         user.setName(registerUserRequest.getName());
@@ -58,5 +63,9 @@ public class AuthApiService implements AuthApiInterface {
         user.setPassword(encoder.encode(registerUserRequest.getPassword()));
 
         userRepository.save(user);
+    }
+
+    private UserEntity existUserEntity(String email) {
+        return userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
     }
 }

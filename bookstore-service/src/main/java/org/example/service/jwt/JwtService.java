@@ -1,21 +1,20 @@
 package org.example.service.jwt;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.security.Key;
 import java.util.Date;
 
 @Service
 public class JwtService {
 
-    private final String secret;
-
-    public JwtService(@Value("${jwt.secret}") String secret) {
-        this.secret = secret;
-    }
+    @Value("${jwt.secret}")
+    private String secret;
 
     public String generateToken(String login) {
         return Jwts.builder()
@@ -42,12 +41,20 @@ public class JwtService {
                 .getSubject();
     }
 
-    public boolean isValid(String token) {
+    public boolean isTokenValid(String token) {
         try {
-            extractLogin(token); // если парсинг проходит — токен валиден
+            Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token);
+
             return true;
-        } catch (Exception e) {
+        } catch (ExpiredJwtException e) {
             return false;
         }
+    }
+
+    private Key getSigningKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes());
     }
 }

@@ -4,8 +4,13 @@ plugins {
 }
 dependencies {
     implementation project(':bookstore-schemas')
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.11.0'
 }
-
+test {
+    useJUnitPlatform()
+}
 tasks.named('bootRun') {
     mainClass.set("org.example.Main")
 }
