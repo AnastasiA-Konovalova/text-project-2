@@ -36,9 +36,6 @@ public class JwtFilter extends OncePerRequestFilter {
             String token = header.substring(7);
 
             if (jwtService.isTokenValid(token)) {
-
-                if (!jwtService.isTokenValid(token)) {
-
                     String login = jwtService.extractLogin(token);
 
                     List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
@@ -53,7 +50,6 @@ public class JwtFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
             }
-        }
 
         filterChain.doFilter(request, response);
     }
