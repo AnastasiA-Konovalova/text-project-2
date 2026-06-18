@@ -1,6 +1,8 @@
 package org.example.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,6 +29,8 @@ public class ReviewEntity {
     private String text;
 
     @Column(name = "rating")
+    @Min(1)
+    @Max(5)
     private Integer rating;
 
     @Column(name = "created_at")

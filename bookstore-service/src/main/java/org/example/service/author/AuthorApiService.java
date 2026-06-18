@@ -2,6 +2,7 @@ package org.example.service.author;
 
 import lombok.RequiredArgsConstructor;
 import org.example.database.AuthorRepository;
+import org.example.exception.ConstraintViolationException;
 import org.example.exception.NotFoundException;
 import org.example.mapper.AuthorMapper;
 import org.example.model.Author;
@@ -27,7 +28,10 @@ public class AuthorApiService implements AuthorApiInterface {
     public List<Author> getPopularAuthors(Integer limit, Integer offset) {
         List<AuthorEntity> authors = authorRepository.findAll();
 
-        //Comparator<AuthorEntity> comparator;
+        if (limit < 0 || offset < 0) {
+            throw new ConstraintViolationException("Must be greater than or equal to 1");
+        }
+
         return authors.stream()
                 .map(authorMapper::toDto)
                 .skip(offset)

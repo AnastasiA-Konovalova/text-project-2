@@ -33,14 +33,14 @@ public class AccountApiService implements AccountApiInterface {
 
     @Transactional
     public List<Book> addFavoriteBook(Integer bookId) {
-        BookEntity bookEntity = existBookEntity(bookId);
-
         String email = authenticationUser();
         UserEntity user = existUserEntity(email);
 
+        BookEntity bookEntity = existBookEntity(bookId);
+        if (!user.getFavoriteBooks().contains(bookEntity)) {
+            user.getFavoriteBooks().add(bookEntity);
+        }
         user.getFavoriteBooks().add(bookEntity);
-
-        userRepository.save(user);
 
         return user.getFavoriteBooks()
                 .stream()

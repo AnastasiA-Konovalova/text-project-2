@@ -60,9 +60,7 @@ public class ReviewApiService implements ReviewApiInterface {
     @Override
     public BookReview getBookReviewById(Integer reviewId) {
         String email = authenticationReview();
-        System.out.println(email);
         ReviewEntity review = existReviewEntity(reviewId);
-        System.out.println(review);
         checkOwner(review, email);
         return reviewMapper.toDto(review);
     }
@@ -104,7 +102,7 @@ public class ReviewApiService implements ReviewApiInterface {
         review.setRating(bookReviewInput.getRating());
 
         UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("Account not found"));
+                .orElseThrow(() -> new NotFoundException("User not found"));
         review.setReviewer(user);
 
         reviewRepository.save(review);
@@ -131,8 +129,6 @@ public class ReviewApiService implements ReviewApiInterface {
 
     private void checkOwner(ReviewEntity review, String email) {
         if (!review.getReviewer().getEmail().equals(email)) {
-            System.out.println(review.getReviewer().getEmail());
-            System.out.println(email);
             throw new UserDoesNotOwnDataException("User doesn't data owner");
         }
     }

@@ -28,7 +28,7 @@ public class UserEntity {
     @Column(name = "middle_name")
     private String middleName;
 
-    @Column(name = "email")
+    @Column(unique = true, name = "email")
     private String email;
 
     @Column(name = "phone_number")

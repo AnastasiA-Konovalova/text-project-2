@@ -51,7 +51,7 @@ public class AuthApiService implements AuthApiInterface {
     @Override
     public void registerUser(RegisterUserRequest registerUserRequest) {
         if (userRepository.findByEmail(registerUserRequest.getEmail()).isPresent()) throw new UserAlreadyExists("User with email " + registerUserRequest.getEmail() +
-                " already exits in data base");
+                " already exists in data base");
 
         UserEntity user = new UserEntity();
 
