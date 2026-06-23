@@ -77,5 +77,4 @@ public class BookServiceTest {
         verify(bookMapper).toDto(bookEntityOne);
         verify(bookMapper).toDto(bookEntityTwo);
     }
-
 }

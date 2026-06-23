@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/testdb   # <-- ПОРТ 5433!
+    username: test_user
+    password: test_password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  security:
+    enabled: false
+jwt:
+  secret: test-secret-key-for-integration-tests-only
+
+logging:
+  level:
+    org.springframework.test: DEBUG

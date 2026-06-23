@@ -2,7 +2,7 @@ package integration;
 
 import jakarta.transaction.Transactional;
 import org.example.Main;
-import org.example.database.AuthorRepository;
+import org.example.database.*;
 import org.example.model.AuthorEntity;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -32,24 +32,41 @@ public class AuthorServiceIT {
     @Autowired
     private AuthorRepository authorRepository;
 
+    @Autowired
+    private ReviewRepository reviewRepository;
+
+    @Autowired
+    private PublisherRepository publisherRepository;
+
+    @Autowired
+    private BookRepository bookRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    private AuthorEntity author1;
+
     @BeforeEach
     void setUp() {
-        AuthorEntity author1 = new AuthorEntity();
-        author1.setId(1);
+        reviewRepository.deleteAll();
+        bookRepository.deleteAll();
+        authorRepository.deleteAll();
+        publisherRepository.deleteAll();
+        userRepository.deleteAll();
+
+        author1 = new AuthorEntity();
         author1.setName("Stiven");
         author1.setSurname("King");
         author1.setPseudonym("Stiven");
         author1.setMiddleName(null);
 
         AuthorEntity author2 = new AuthorEntity();
-        author2.setId(2);
         author2.setName("Aizek");
         author2.setSurname("Azimov");
         author2.setPseudonym("Aizek");
         author2.setMiddleName(null);
 
         AuthorEntity author3 = new AuthorEntity();
-        author2.setId(3);
         author3.setName("Klim");
         author3.setSurname("Ivanov");
         author3.setPseudonym("Klim");
@@ -84,11 +101,9 @@ public class AuthorServiceIT {
 
     @Test
     void getAuthorById_ShouldReturnAuthor() throws Exception {
-        int authorId = 1;
-
-        mockMvc.perform(get("/author/{authorId}", authorId))
+        mockMvc.perform(get("/author/{authorId}", author1.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(authorId))
+                .andExpect(jsonPath("$.id").value(author1.getId()))
                 .andExpect(jsonPath("$.name").value("Stiven"))
                 .andExpect(jsonPath("$.surname").value("King"));
     }

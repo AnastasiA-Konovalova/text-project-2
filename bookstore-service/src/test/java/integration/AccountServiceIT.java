@@ -65,8 +65,6 @@ public class AccountServiceIT {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private UserEntity savedUser;
-
     private BasketEntity basket;
 
     private BasketDetailEntity detail;
@@ -77,6 +75,12 @@ public class AccountServiceIT {
 
     @BeforeEach
     void setUp() {
+        reviewRepository.deleteAll();
+        bookRepository.deleteAll();
+        authorRepository.deleteAll();
+        publisherRepository.deleteAll();
+        userRepository.deleteAll();
+
         user = new UserEntity();
         user.setName("Ivan");
         user.setSurname("Ivanov");
@@ -125,7 +129,7 @@ public class AccountServiceIT {
         basket = basketRepository.save(basket);
 
         user.setBasket(basket);
-        savedUser = userRepository.save(user);
+        userRepository.save(user);
     }
 
     @Test
@@ -228,7 +232,7 @@ public class AccountServiceIT {
 
     @Test
     void removeBasketItem_ShouldRemoveItemById() throws Exception {
-        Integer itemId = basket.getBasketDetails().get(0).getId();
+        Integer itemId = basket.getBasketDetails().getFirst().getId();
 
 
         mockMvc.perform(delete("/account/basket/items/{itemId}", itemId))
@@ -242,5 +246,3 @@ public class AccountServiceIT {
                 .andExpect(status().isNotFound());
     }
 }
-
-

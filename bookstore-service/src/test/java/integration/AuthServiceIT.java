@@ -3,7 +3,7 @@ package integration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.example.Main;
-import org.example.database.UserRepository;
+import org.example.database.*;
 import org.example.model.LoginUserRequest;
 import org.example.model.RegisterUserRequest;
 import org.example.model.UserEntity;
@@ -38,6 +38,18 @@ public class AuthServiceIT {
     private UserRepository userRepository;
 
     @Autowired
+    private BookRepository bookRepository;
+
+    @Autowired
+    private AuthorRepository authorRepository;
+
+    @Autowired
+    private PublisherRepository publisherRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
@@ -51,6 +63,12 @@ public class AuthServiceIT {
 
     @BeforeEach
     void setUp() {
+        reviewRepository.deleteAll();
+        bookRepository.deleteAll();
+        authorRepository.deleteAll();
+        publisherRepository.deleteAll();
+        userRepository.deleteAll();
+
         userEntity = new UserEntity();
         userEntity.setName("Ivan");
         userEntity.setSurname("Ivanov");

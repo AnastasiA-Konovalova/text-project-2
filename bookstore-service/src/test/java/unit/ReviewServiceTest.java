@@ -160,7 +160,7 @@ public class ReviewServiceTest {
 
         assertNotNull(result);
         assertEquals(reviewId, result.getId());
-        assertEquals(changeReviewRequest.getText(), "Updated review");
+        assertEquals("Updated review", changeReviewRequest.getText());
 
         verify(reviewRepository).findById(reviewId);
         verify(reviewMapper).toDto(entity);
@@ -213,7 +213,7 @@ public class ReviewServiceTest {
 
         assertNotNull(result);
         assertEquals(reviewId, result.getId());
-        assertEquals(bookReviewInput.getText(), "New review");
+        assertEquals("New review", bookReviewInput.getText());
 
         verify(userRepository).findByEmail(email);
         verify(bookRepository).findById(bookId);

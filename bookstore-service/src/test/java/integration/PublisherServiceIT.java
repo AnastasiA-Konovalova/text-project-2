@@ -31,10 +31,11 @@ public class PublisherServiceIT {
     @Autowired
     private PublisherRepository publisherRepository;
 
+    private PublisherEntity publisherEntity;
+
     @BeforeEach
     void setUp() {
-        PublisherEntity publisherEntity = new PublisherEntity();
-        publisherEntity.setId(1);
+        publisherEntity = new PublisherEntity();
         publisherEntity.setName("Line");
         publisherEntity.setDescription("Description1");
         publisherEntity.setCreatedAt(LocalDateTime.now());
@@ -46,11 +47,9 @@ public class PublisherServiceIT {
 
     @Test
     void getPublisherById_ShouldReturnPublisher() throws Exception {
-        int publisherId = 1;
-
-        mockMvc.perform(get("/publisher/{publisherId}", publisherId))
+        mockMvc.perform(get("/publisher/{publisherId}", publisherEntity.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(publisherId))
+                .andExpect(jsonPath("$.id").value(publisherEntity.getId()))
                 .andExpect(jsonPath("$.name").value("Line"))
                 .andExpect(jsonPath("$.description").value("Description1"))
                 .andExpect(jsonPath("$.country").value("USA"));

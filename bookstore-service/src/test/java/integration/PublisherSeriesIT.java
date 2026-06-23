@@ -2,6 +2,7 @@ package integration;
 
 import jakarta.transaction.Transactional;
 import org.example.Main;
+import org.example.database.PublisherRepository;
 import org.example.database.PublisherSeriesRepository;
 import org.example.model.PublisherEntity;
 import org.example.model.PublisherSeriesEntity;
@@ -31,15 +32,21 @@ public class PublisherSeriesIT {
     @Autowired
     private PublisherSeriesRepository publisherSeriesRepository;
 
+    @Autowired
+    private PublisherRepository publisherRepository;
+
+    private PublisherSeriesEntity publisherSeriesEntity;
+
     @BeforeEach
     void setUp() {
-        PublisherSeriesEntity publisherSeriesEntity = new PublisherSeriesEntity();
-        publisherSeriesEntity.setId(1);
+        publisherSeriesEntity = new PublisherSeriesEntity();
         publisherSeriesEntity.setName("Friend");
         publisherSeriesEntity.setCreatedAt(LocalDateTime.now());
         publisherSeriesEntity.setUpdatedAt(LocalDateTime.now());
+
         PublisherEntity publisherEntity = new PublisherEntity();
-        publisherEntity.setId(1);
+        publisherEntity.setCountry("USA");
+        publisherRepository.save(publisherEntity);
 
         publisherSeriesEntity.setPublisherId(publisherEntity.getId());
 
@@ -48,16 +55,14 @@ public class PublisherSeriesIT {
 
     @Test
     void getPublisherSeriesById_ShouldReturnPublisherSeries() throws Exception {
-        int publisherSeries = 1;
-
-        mockMvc.perform(get("/publisherSeries/{publisherSeriesId}", publisherSeries))
+        mockMvc.perform(get("/publisherSeries/{publisherSeriesId}", publisherSeriesEntity.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(publisherSeries))
+                .andExpect(jsonPath("$.id").value(publisherSeriesEntity.getId()))
                 .andExpect(jsonPath("$.name").value("Friend"));
     }
 
     @Test
-    void ggetPublisherSeriesById_ShouldThrowException_WhenIdIsNotExists() throws Exception {
+    void getPublisherSeriesById_ShouldThrowException_WhenIdIsNotExists() throws Exception {
         int publisherSeries = 5000;
 
         mockMvc.perform(get("/publisherSeries/{publisherSeriesId}", publisherSeries))

@@ -37,9 +37,6 @@ public class AccountApiService implements AccountApiInterface {
         UserEntity user = existUserEntity(email);
 
         BookEntity bookEntity = existBookEntity(bookId);
-        if (!user.getFavoriteBooks().contains(bookEntity)) {
-            user.getFavoriteBooks().add(bookEntity);
-        }
         user.getFavoriteBooks().add(bookEntity);
 
         return user.getFavoriteBooks()

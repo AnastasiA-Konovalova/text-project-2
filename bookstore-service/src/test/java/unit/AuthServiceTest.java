@@ -103,5 +103,4 @@ public class AuthServiceTest {
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
-
 }

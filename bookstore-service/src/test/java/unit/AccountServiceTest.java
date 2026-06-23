@@ -229,8 +229,4 @@ public class AccountServiceTest {
 
         verify(userRepository).findByEmail(email);
     }
-
-
-
-
 }

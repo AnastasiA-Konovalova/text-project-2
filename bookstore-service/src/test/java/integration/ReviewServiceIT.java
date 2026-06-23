@@ -14,16 +14,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "JWT_SECRET=test-secret-key"
 })
 @AutoConfigureMockMvc(addFilters = false)
+@WithMockUser(username = "email3@mail.ru")
 @Transactional
 public class ReviewServiceIT {
 
@@ -64,22 +63,31 @@ public class ReviewServiceIT {
 
     @BeforeEach
     void setUp() {
+        reviewRepository.deleteAll();
+        bookRepository.deleteAll();
+        authorRepository.deleteAll();
+        publisherRepository.deleteAll();
+        userRepository.deleteAll();
+
         UserEntity user = new UserEntity();
         user.setName("Ivan");
         user.setSurname("Ivanov");
-        user.setEmail("email1@mail.ru" + System.nanoTime());
+        user.setEmail("email3@mail.ru");
         user.setMiddleName(null);
         user.setPassword("password1");
         user.setPhoneNumber("89123568854");
+        userRepository.flush();
 
-        book = new BookEntity();
-        book.setTitle("Test Book");
+        UserEntity savedUser = userRepository.save(user);
 
         AuthorEntity author = new AuthorEntity();
         author.setName("Aizek");
         author.setSurname("Azimov");
         author = authorRepository.save(author);
+        authorRepository.flush();
 
+        book = new BookEntity();
+        book.setTitle("Test Book");
         book.setAuthor(author);
         book.setGenre(Genre.COMEDY);
         book.setPrice(BigDecimal.valueOf(5000.0));
@@ -88,20 +96,19 @@ public class ReviewServiceIT {
         book.setReviewCount(5);
         book.setAverageRating(4);
         book.setReleaseDate(LocalDateTime.now());
+        bookRepository.flush();
 
         PublisherEntity publisher = new PublisherEntity();
         publisher.setName("Line");
         publisher.setCountry("USA");
         publisher = publisherRepository.save(publisher);
+        publisherRepository.flush();
         book.setPublisher(publisher);
 
         book = bookRepository.save(book);
 
-        UserEntity savedUser = userRepository.save(user);
-        userRepository.save(savedUser);
-
         reviewEntity = new ReviewEntity();
-        reviewEntity.setReviewer(userRepository.findByEmail("email1@mail.ru").orElseThrow());
+        reviewEntity.setReviewer(savedUser);
         reviewEntity.setBook(book);
         reviewEntity.setText("Old text");
         reviewEntity.setRating(5);
@@ -116,13 +123,6 @@ public class ReviewServiceIT {
     void postReview_ShouldReturnBookReview() throws Exception {
         int ratingId = 5;
 
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        "email1@mail.ru",
-                        null,
-                        List.of()
-                )
-        );
         BookReviewInput bookReviewInput = new BookReviewInput();
         bookReviewInput.setBookId(book.getId());
         bookReviewInput.setRating(ratingId);
@@ -138,14 +138,6 @@ public class ReviewServiceIT {
 
     @Test
     void postReview_invalidBookId_shouldReturnNotFound() throws Exception {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        "test@mail.com",
-                        null,
-                        List.of()
-                )
-        );
-
         BookReviewInput input = new BookReviewInput();
         input.setBookId(999999);
         input.setRating(5);
@@ -159,14 +151,6 @@ public class ReviewServiceIT {
 
     @Test
     void postReview_invalidRating_shouldReturnBadRequest() throws Exception {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        "test@mail.com",
-                        null,
-                        List.of()
-                )
-        );
-
         BookReviewInput input = new BookReviewInput();
         input.setBookId(book.getId());
         input.setRating(999);
@@ -180,16 +164,6 @@ public class ReviewServiceIT {
 
     @Test
     void patchChangeReview_ShouldReturnBookReview() throws Exception {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        "email1@mail.ru",
-                        null,
-                        List.of()
-                )
-        );
-
-
-
         mockMvc.perform(patch("/review/{reviewId}", reviewEntity.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -200,14 +174,6 @@ public class ReviewServiceIT {
 
     @Test
     void postChangeReview_ShouldThrowNotFound() throws Exception {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        "email1@mail.ru",
-                        null,
-                        List.of()
-                )
-        );
-
         ChangeReviewRequest request = new ChangeReviewRequest();
         request.setRating(4);
         request.setText("New text");
@@ -220,14 +186,6 @@ public class ReviewServiceIT {
 
     @Test
     void getBookReviewById_ReturnBookReview() throws Exception {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        "email1@mail.ru",
-                        null,
-                        List.of()
-                )
-        );
-
         reviewEntity = reviewRepository.save(reviewEntity);
 
         mockMvc.perform(get("/review/{reviewId}", reviewEntity.getId()))
@@ -239,13 +197,6 @@ public class ReviewServiceIT {
 
     @Test
     void getBookReviewById_ShouldReturnNotFound_WhenReviewNotFound() throws Exception {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        "email1@mail.ru",
-                        null,
-                        List.of()
-                )
-        );
         int reviewId = 9999;
 
         mockMvc.perform(get("/review/{reviewId}", reviewId))
@@ -254,19 +205,11 @@ public class ReviewServiceIT {
 
     @Test
     void getReviews_ReturnListBookReview() throws Exception {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        "email1@mail.ru",
-                        null,
-                        List.of()
-                )
-        );
-        int bookId = 1;
         int limit = 3;
         int offset = 0;
 
         mockMvc.perform(get("/review")
-                        .param("bookId", String.valueOf(bookId))
+                        .param("bookId", String.valueOf(book.getId()))
                         .param("limit", String.valueOf(limit))
                         .param("offset", String.valueOf(offset)))
                 .andExpect(status().isOk())
@@ -287,14 +230,6 @@ public class ReviewServiceIT {
 
     @Test
     void deleteReviewById_Success() throws Exception {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        "email1@mail.ru",
-                        null,
-                        List.of()
-                )
-        );
-
         mockMvc.perform(delete("/review/{reviewId}", reviewEntity.getId()))
                 .andExpect(status().isCreated());
                         assertFalse(reviewRepository.existsById(reviewEntity.getId()));
@@ -302,14 +237,6 @@ public class ReviewServiceIT {
 
     @Test
     void deleteReviewById_WhenIdIsNotExists() throws Exception {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        "email1@mail.ru",
-                        null,
-                        List.of()
-                )
-        );
-
         mockMvc.perform(delete("/review/{reviewId}", 9999))
                 .andExpect(status().isNotFound());
     }
