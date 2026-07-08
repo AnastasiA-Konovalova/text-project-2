@@ -15,3 +15,12 @@ spring:
     show-sql: true
 jwt:
   secret: ${JWT_SECRET}
+
+payment:
+  order:
+    type-rid: AK_Sale_Order_Base
+
+  service:
+      create-order-url: http://localhost:8004/order
+      set-src-token-url: http://localhost:8004/order/{id}/set-src-token
+      exec-tran-url: http://localhost:8004/order/{id}/exec-tran

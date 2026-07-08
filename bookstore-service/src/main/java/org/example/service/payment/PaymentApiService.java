@@ -64,11 +64,18 @@ public class PaymentApiService implements PaymentApiInterface {
     @Value("${payment.service.url:http://localhost:8004/order/{id}/exec-tran}")
     private String executeTransactionUrl;
 
+    @Value("${payment.order.type-rid:AK_Sale_Order_Base}")
+    private String orderTypeRid;
+
     private Integer id;
 
     private String orderPassword;
 
     private boolean status = false;
+
+    private static final String LANGUAGE = "en";
+
+    private static final String CURRENCY = "USD";
 
     @Autowired
     private RestTemplate restTemplate;
@@ -333,15 +340,11 @@ public class PaymentApiService implements PaymentApiInterface {
         if (paymentRequest.getPaymentMethod() != PaymentRequest.PaymentMethodEnum.CARD) {
             throw new PaymentException("Payment method should be 'CARD'");
         }
-//        if (paymentRequest.getAmount() != null && paymentRequest.getAmount() <= 0) {
-//            throw new PaymentException("Amount should be more then zero");
-//        }
     }
 
     private void validationRefund(PaymentEntity paymentEntity, RefundPaymentRequest refundPaymentRequest) {
         String email = authenticationUser();
         existUserEntity(email);
-        System.out.println(paymentEntity.getStatus());
         if (!paymentEntity.getStatus().equals(PaymentResponse.StatusEnum.FULLY_PAID.getValue())) {
             throw new PaymentException("For refund status should be 'fullyPaid'");
         }
@@ -373,9 +376,9 @@ public class PaymentApiService implements PaymentApiInterface {
 
     private PaymentGatewayRequest buildGatewayRequest(CreateOrderRequest createOrderRequest) {
         OrderGateway order = new OrderGateway();
-        order.setTypeRid("AK_Sale_Order_Base");
-        order.setCurrency("USD");
-        order.setLanguage("en");
+        order.setTypeRid(orderTypeRid);
+        order.setCurrency(CURRENCY);
+        order.setLanguage(LANGUAGE);
 
         String totalPrice = createOrderRequest.getBasket().getTotalPrice().toString();
         order.setAmount(totalPrice);
@@ -401,7 +404,6 @@ public class PaymentApiService implements PaymentApiInterface {
 
     private PaymentMethodRequest buildPayGatewayRequest(PaymentRequest paymentRequest, PaymentEntity paymentEntity) {
         String phase = "Single";
-
         String data = "704";
 
         TranData tranData = new TranData();
@@ -409,19 +411,13 @@ public class PaymentApiService implements PaymentApiInterface {
         CVV2Block cvv2Block = new CVV2Block();
 
         cvv2Block.setData(data);
-        //cvv2Block.setData(paymentRequest.getData());
         authenticationData.setCvv2Block(cvv2Block);
         tranData.setPhase(phase);
         tranData.setAmount(paymentEntity.getSumOfPay().toString());
-        //tranData.setOrderId(String.valueOf(paymentRequest.getOrderId()));
         tranData.setAuthentication(authenticationData);
 
         PaymentMethodRequest paymentMethodRequest = new PaymentMethodRequest();
         paymentMethodRequest.setTran(tranData);
-
-//        paymentMethodRequest.getTran().setAmount(paymentRequest.getAmount().toString());
-//        paymentMethodRequest.getTran().setPhase(phase);
-//        paymentMethodRequest.getTran().setAuthentication(authenticationData);
 
         return paymentMethodRequest;
     }
