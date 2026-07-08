@@ -12,7 +12,7 @@ public interface AccountApiInterface {
 
     List<Book> addFavoriteBook(Integer bookId);
 
-    List<Book> getFavoriteBooks(SortBook sortBook, Order order, Integer limit, Integer offset);
+    List<Book> getFavoriteBooks(SortBook sortBook, org.example.model.Order order, Integer limit, Integer offset);
 
     Basket addToBasket(BookIdRequest bookIdRequest);
 
@@ -21,5 +21,4 @@ public interface AccountApiInterface {
     List<Book> getPurchasedBooks(Order order, Integer limit, Integer offset, SortBook sortBook);
 
     void removeBasketItem(Integer itemId);
-
 }

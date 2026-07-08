@@ -7,7 +7,6 @@ import org.example.database.*;
 import org.example.model.*;
 import org.example.model.BookIdRequest;
 import org.example.model.Genre;
-import org.example.model.Order;
 import org.example.model.SortBook;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +18,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.example.model.Order;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

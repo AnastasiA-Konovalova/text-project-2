@@ -52,12 +52,14 @@ VALUES
     (1, 1),
     (2, 2);
 
-INSERT INTO orders (user_id, recipient_name, created_at, updated_at)
-VALUES
-    (1, 'Ivan Ivanov', '2025-03-19 11:00:00', NULL),
-    (2, 'Ivan Petrov', '2026-09-19 20:00:00', NULL);
-
---INSERT INTO auth (email, password)
+--INSERT INTO payment_TXPG (payment_method, order_id, sum_of_pay, status, created_at, updated_at)
 --VALUES
---    ('email@email', '324567'),
---    ('email2@email', 'DFRFS#4455e7')
+--    ('CARD', 1, 4000.00, 'Preparing', '2026-06-21 11:00:00', NULL),
+--    ('SBP', 2, 6000.00, 'Preparing', '2026-07-01 13:00:00', NULL);
+--
+--
+--INSERT INTO orders (user_id, payments_id, recipient_name, created_at, updated_at)
+--VALUES
+--    (1, 1, 'Ivan Ivanov', '2025-03-19 11:00:00', NULL),
+--    (2, 2, 'Ivan Petrov', '2026-09-19 20:00:00', NULL);
+

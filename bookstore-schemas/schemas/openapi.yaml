@@ -357,9 +357,8 @@ paths:
       tags:
         - payment
 
-      summary: Оплата корзины
-      description: Произведение оплаты корзины
-      operationId: postPayment
+      summary: Оплата заказа
+      operationId: payment
 
       security:
         - bearerAuth: []
@@ -374,14 +373,92 @@ paths:
 
       responses:
         '201':
-          description: Корзина оплачена
-
+          description: Заказ создан
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaymentResponse'
         '4XX':
-          description: Клиентская ошибка при оплате корзины
+          description: Клиентская ошибка при создании заказа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /payment/card:
+    post:
+      tags:
+        - payment
+
+      summary: Ввод реквизитов карты
+      operationId: addPaymentDetails
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+        required: true
+
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCardRequest'
+
+      responses:
+        '201':
+          description: Реквизиты карты введены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentCardResponse'
+        '4XX':
+          description: Клиентская ошибка при вводе реквизитов карты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /payment/createOrder:
+    post:
+      tags:
+        - payment
+
+      summary: Создание заказа
+      operationId: createOrder
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+        required: true
+
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+
+      responses:
+        '201':
+          description: Корзина оплачена
+
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateOrderResponse'
+        '4XX':
+          description: Клиентская ошибка при создании ордера
           content:
             application/json:
               schema:
@@ -1169,7 +1246,6 @@ components:
           type: string
           format: date-time
 
-
     BasketDetail:
       type: object
       description: Позиция книги в корзине
@@ -1197,43 +1273,6 @@ components:
           type: number
           description: Общая стоимость позиции (price * quantity)
 
-    PaymentResponse:
-      type: object
-
-      properties:
-        id:
-          type: integer
-          description: Идентификатор ответа на оплату
-
-        orderId:
-          type: integer
-          description: Информация об идентификаторе заказа
-
-        sumOfPay:
-          type: number
-          format: double
-          description: Информация о сумме платежа
-
-        status:
-          type: string
-          description: Информация о статусе оплаты
-          enum:
-            - CREATED
-            - PENDING
-            - PAID
-            - FAILED
-            - CANCELLED
-
-        createdAt:
-          type: string
-          format: date-time
-          description: Информация о дате оплаты
-
-        receiptUrl:
-          type: string
-          format: uri
-          description: Информация о чеке
-
     PaymentRequest:
       type: object
 
@@ -1241,6 +1280,126 @@ components:
         id:
           type: integer
           description: Идентификатор запроса платежа
+
+        orderId:
+          type: integer
+          description: Идентификатор заказа для произведения оплаты
+
+        paymentMethod:
+          type: string
+          description: Информация о методе оплаты
+          enum:
+            - CARD
+            - SBP
+            - PAYPAL
+
+        basket:
+          $ref: '#/components/schemas/Basket'
+
+    PaymentResponse:
+      type: object
+
+      properties:
+        paymentMethod:
+          type: string
+          description: Информация о методе оплаты
+          enum:
+            - CARD
+            - SBP
+            - PAYPAL
+
+        orderId:
+          type: integer
+          description: Номер заказа
+
+        status:
+          type: string
+          description: Информация о статусе заказа
+          enum:
+            - Preparing
+            - WaitPushTran
+            - Authorized
+            - PartPaid
+            - Funded
+            - FullyPaid
+            - Expired
+            - Cancelled
+            - Rejected
+            - Refused
+            - Closed
+            - Voided
+            - Refunded
+            - Declined
+
+        approvalCode:
+          type: string
+          description: Код одобрения транзакции
+        match:
+          type: object
+          properties:
+            tranActionId:
+              type: string
+              description: Идентификатор действия транзакции
+            ridByPmo:
+              type: string
+              description: Идентификатор RID от PMO
+        pmoResultCode:
+          type: string
+          description: Код результата от PMO
+
+    PaymentCardRequest:
+      type: object
+      required:
+        - pan
+        - expiration
+        - cvv
+        - email
+        - name
+
+      properties:
+        id:
+          type: integer
+          description: Идентификатор
+
+        PAN:
+          type: string
+          description: Информация о номере карты
+
+        expiration:
+          type: string
+          description: Информация о сроке действия карты
+
+        CVV:
+          type: string
+          description: Трехзначный защитный код
+
+        email:
+          type: string
+          description: Почта держателя карты
+
+        name:
+          type: string
+          description: Имя держателя карты
+
+    PaymentCardResponse:
+      type: object
+
+      properties:
+        email:
+          type: string
+          description: Почта держателя карты
+
+        name:
+          type: string
+          description: Имя держателя карты
+
+    CreateOrderRequest:
+      type: object
+
+      properties:
+        orderId:
+          type: integer
+          description: Идентификатор созданного заказа
 
         basket:
           $ref: '#/components/schemas/Basket'
@@ -1253,9 +1412,33 @@ components:
             - SBP
             - PAYPAL
 
+        status:
+          type: string
+          description: Информация о статусе заказа
+          enum:
+            - Preparing
+            - WaitPushTran
+            - Authorized
+            - PartPaid
+            - Funded
+            - FullyPaid
+            - Expired
+            - Cancelled
+            - Rejected
+            - Refused
+            - Closed
+            - Voided
+            - Refunded
+            - Declined
+
+        amount:
+          type: number
+          format: double
+          description: Информация о сумме созданного заказа
+
         deliveryAddress:
           type: string
-          description: Информация об адресе заставки
+          description: Информация об адресе доставки
 
         recipientName:
           type: string
@@ -1265,13 +1448,28 @@ components:
           type: string
           description: Информация о телефоне получателя
 
-    RefundResponse:
+    CreateOrderResponse:
       type: object
 
       properties:
         id:
-          $ref: '#/components/schemas/payment-id'
+          type: integer
+          description: Идентификатор ответа
 
+        amount:
+          type: number
+          format: double
+          description: Информация о сумме созданного заказа
+
+        createdAt:
+          type: string
+          format: date-time
+
+
+    RefundResponse:
+      type: object
+
+      properties:
         refund_amount:
           type: number
           format: double
@@ -1281,23 +1479,13 @@ components:
           type: integer
           description: Идентификатор заказа
 
-        status:
-          type: string
-          description: Информация о статусе заказа
-          enum:
-            - PENDING
-            - APPROVED
-            - REJECTED
-            - COMPLETED
-
         reason:
           type: string
           description: Информация о причинах возврата
 
-        createdAt:
-          type: string
-          format: date-time
-          description: Информация о дате создания книги
+        tran:
+          type: object
+
 
     Publisher:
       type: object

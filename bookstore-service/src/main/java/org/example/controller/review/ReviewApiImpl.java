@@ -6,8 +6,8 @@ import org.example.model.*;
 import org.example.model.BookReview;
 import org.example.model.BookReviewInput;
 import org.example.model.ChangeReviewRequest;
-import org.example.model.Order;
 import org.example.model.SortReview;
+import org.example.model.Order;
 import org.example.service.review.ReviewApiInterface;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +38,8 @@ public class ReviewApiImpl implements ReviewApi {
     }
 
     @Override
-    public ResponseEntity<List<BookReview>> getReviews(Integer bookId, SortReview sortReview, Order order, Integer limit, Integer offset) {
+    public ResponseEntity<List<BookReview>> getReviews(Integer bookId, SortReview sortReview,
+                                                       org.example.model.Order order, Integer limit, Integer offset) {
         return ResponseEntity.ok(reviewInterface.getReviews(bookId,sortReview, order, limit, offset));
     }
 

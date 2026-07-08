@@ -58,4 +58,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest()
                 .body(Map.of("message", ex.getMessage()));
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Error> handle(IllegalArgumentException ex) {
+        Error error = new Error();
+        error.setMessage(ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
+    }
+
+    @ExceptionHandler(SumLessThenMin.class)
+    public ResponseEntity<Error> handle(SumLessThenMin ex) {
+        Error error = new Error();
+        error.setMessage(ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
+    }
 }
