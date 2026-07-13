@@ -8,8 +8,6 @@ import lombok.Setter;
 public class Tran {
 
     private String approvalCode;
-
     private Match match;
-
     private String pmoResultCode;
 }

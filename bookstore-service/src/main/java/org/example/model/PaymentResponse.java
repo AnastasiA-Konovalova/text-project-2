@@ -1,7 +1,8 @@
-package org.example.model.paymentMethodResponse;
+package org.example.model;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.example.model.paymentMethodResponse.Tran;
 
 @Getter
 @Setter

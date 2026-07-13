@@ -3,8 +3,6 @@ package org.example.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -19,19 +17,21 @@ public class PaymentEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(columnDefinition = "payment_method")
-    private org.example.model.PaymentRequest.PaymentMethodEnum paymentMethod;
+    @ManyToOne
+    @JoinColumn(name = "order_id")
+    private OrderEntity order;
 
-    @Column(name = "order_id")
-    private Integer orderId;
+    @Column(name = "payment_order_id")
+    private Integer paymentOrderId;
 
     @Column(name = "sum_of_pay")
     private BigDecimal sumOfPay;
 
     @Column(name = "status")
     private String status;
+
+    @Column(name = "is_card_saved")
+    private Boolean isCardSaved;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

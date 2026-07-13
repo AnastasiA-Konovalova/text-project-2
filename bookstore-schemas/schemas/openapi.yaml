@@ -364,7 +364,7 @@ paths:
         - bearerAuth: []
 
       requestBody:
-        required: true
+        required: false
 
         content:
           application/json:
@@ -397,7 +397,7 @@ paths:
         - payment
 
       summary: Ввод реквизитов карты
-      operationId: addPaymentDetails
+      operationId: saveCard
 
       security:
         - bearerAuth: []
@@ -430,13 +430,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /payment/createOrder:
+  /payment/createPayment:
     post:
       tags:
         - payment
 
       summary: Создание заказа
-      operationId: createOrder
+      operationId: createPayment
 
       security:
         - bearerAuth: []
@@ -487,14 +487,6 @@ paths:
           required: true
           schema:
             $ref: '#/components/schemas/payment-id'
-
-      requestBody:
-        required: true
-
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RefundPaymentRequest'
 
       responses:
         '201':
@@ -1277,24 +1269,13 @@ components:
       type: object
 
       properties:
-        id:
-          type: integer
-          description: Идентификатор запроса платежа
-
-        orderId:
-          type: integer
-          description: Идентификатор заказа для произведения оплаты
-
-        paymentMethod:
+        data:
           type: string
-          description: Информация о методе оплаты
-          enum:
-            - CARD
-            - SBP
-            - PAYPAL
+          description: CVV карты
+          minLength: 3
+          maxLength: 3
+          pattern: "^[0-9]{3}$"
 
-        basket:
-          $ref: '#/components/schemas/Basket'
 
     PaymentResponse:
       type: object
@@ -1305,8 +1286,6 @@ components:
           description: Информация о методе оплаты
           enum:
             - CARD
-            - SBP
-            - PAYPAL
 
         orderId:
           type: integer
@@ -1331,22 +1310,6 @@ components:
             - Refunded
             - Declined
 
-        approvalCode:
-          type: string
-          description: Код одобрения транзакции
-        match:
-          type: object
-          properties:
-            tranActionId:
-              type: string
-              description: Идентификатор действия транзакции
-            ridByPmo:
-              type: string
-              description: Идентификатор RID от PMO
-        pmoResultCode:
-          type: string
-          description: Код результата от PMO
-
     PaymentCardRequest:
       type: object
       required:
@@ -1364,22 +1327,37 @@ components:
         PAN:
           type: string
           description: Информация о номере карты
+          minLength: 16
+          maxLength: 16
+          pattern: "^[0-9]{16}$"
 
         expiration:
           type: string
           description: Информация о сроке действия карты
+          minLength: 4
+          maxLength: 4
+          pattern: "^(0[1-9]|1[0-2])([0-9]{2})$"
 
         CVV:
           type: string
           description: Трехзначный защитный код
+          minLength: 3
+          maxLength: 3
+          pattern: "^[0-9]{3}$"
 
         email:
           type: string
           description: Почта держателя карты
+          minLength: 5
+          maxLength: 100
+          pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
 
         name:
           type: string
           description: Имя держателя карты
+          minLength: 2
+          maxLength: 100
+          pattern: "^[A-Za-z\\s-]+$"
 
     PaymentCardResponse:
       type: object
@@ -1395,58 +1373,38 @@ components:
 
     CreateOrderRequest:
       type: object
+      required:
+        - paymentMethod
+        - recipientName
+        - recipientPhone
+        - deliveryAddress
 
       properties:
-        orderId:
-          type: integer
-          description: Идентификатор созданного заказа
-
-        basket:
-          $ref: '#/components/schemas/Basket'
-
         paymentMethod:
           type: string
           description: Информация о методе оплаты
           enum:
             - CARD
-            - SBP
-            - PAYPAL
-
-        status:
-          type: string
-          description: Информация о статусе заказа
-          enum:
-            - Preparing
-            - WaitPushTran
-            - Authorized
-            - PartPaid
-            - Funded
-            - FullyPaid
-            - Expired
-            - Cancelled
-            - Rejected
-            - Refused
-            - Closed
-            - Voided
-            - Refunded
-            - Declined
-
-        amount:
-          type: number
-          format: double
-          description: Информация о сумме созданного заказа
 
         deliveryAddress:
           type: string
           description: Информация об адресе доставки
+          minLength: 5
+          maxLength: 255
 
         recipientName:
           type: string
           description: Информация об имени получателя
+          minLength: 2
+          maxLength: 100
+          pattern: "^[a-zA-Zа-яА-Я\\s-]+$"
 
         recipientPhone:
           type: string
           description: Информация о телефоне получателя
+          minLength: 10
+          maxLength: 20
+          pattern: "^\\+?[0-9\\s-()]{10,20}$"
 
     CreateOrderResponse:
       type: object
@@ -1470,6 +1428,9 @@ components:
       type: object
 
       properties:
+        id:
+          $ref: '#/components/schemas/payment-id'
+
         refund_amount:
           type: number
           format: double
@@ -1486,6 +1447,21 @@ components:
         tran:
           type: object
 
+        approvalCode:
+          type: string
+          description: Код одобрения транзакции
+        match:
+          type: object
+          properties:
+            tranActionId:
+              type: string
+              description: Идентификатор действия транзакции
+            ridByPmo:
+              type: string
+              description: Идентификатор RID от PMO
+        pmoResultCode:
+          type: string
+          description: Код результата от PMO
 
     Publisher:
       type: object
