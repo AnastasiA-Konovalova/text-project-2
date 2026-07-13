@@ -58,16 +58,16 @@ public class PaymentApiService implements PaymentApiInterface {
 
     private final AccountApiInterface accountApiInterface;
 
-    @Value("${payment.service.url:http://localhost:8004/order}")
-    private String paymentServiceUrl;
+    @Value("${payment.service.create-order-url}")
+    private String createOrderPath;
 
-    @Value("${payment.service.url:http://localhost:8004/order/{id}/set-src-token}")
+    @Value("${payment.service.set-src-token-url}")
     private String paymentCardServiceUrl;
 
-    @Value("${payment.service.url:http://localhost:8004/order/{id}/exec-tran}")
+    @Value("${payment.service.exec-tran-url}")
     private String executeTransactionUrl;
 
-    @Value("${payment.order.type-rid:AK_Sale_Order_Base}")
+    @Value("${payment.order.type-rid}")
     private String orderTypeRid;
 
     @Value("${payment.basic.auth}")
@@ -100,7 +100,7 @@ public class PaymentApiService implements PaymentApiInterface {
 
             HttpEntity<PaymentGatewayRequest> entity = new HttpEntity<>(gatewayRequest, headers);
             ResponseEntity<OrderResponse> response = restTemplate.exchange(
-                            paymentServiceUrl,
+                    createOrderPath,
                             HttpMethod.POST,
                             entity,
                             OrderResponse.class
