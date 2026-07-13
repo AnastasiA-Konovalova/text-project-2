@@ -1428,9 +1428,6 @@ components:
       type: object
 
       properties:
-        id:
-          $ref: '#/components/schemas/payment-id'
-
         refund_amount:
           type: number
           format: double
@@ -1446,22 +1443,6 @@ components:
 
         tran:
           type: object
-
-        approvalCode:
-          type: string
-          description: Код одобрения транзакции
-        match:
-          type: object
-          properties:
-            tranActionId:
-              type: string
-              description: Идентификатор действия транзакции
-            ridByPmo:
-              type: string
-              description: Идентификатор RID от PMO
-        pmoResultCode:
-          type: string
-          description: Код результата от PMO
 
     Publisher:
       type: object
