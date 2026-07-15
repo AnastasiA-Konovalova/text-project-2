@@ -352,7 +352,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /payment:
+  /payment/{orderId}:
     post:
       tags:
         - payment
@@ -362,6 +362,13 @@ paths:
 
       security:
         - bearerAuth: []
+
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/order-id'
 
       requestBody:
         required: false
@@ -470,7 +477,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /payment/{paymentId}/refund:
+  /payment/{orderId}/refund:
     post:
       tags:
         - payment
@@ -482,11 +489,11 @@ paths:
         - bearerAuth: []
 
       parameters:
-        - name: paymentId
+        - name: orderId
           in: path
           required: true
           schema:
-            $ref: '#/components/schemas/payment-id'
+            $ref: '#/components/schemas/order-id'
 
       responses:
         '201':
@@ -1079,6 +1086,10 @@ components:
       type: integer
       description: Идентификатор платежа
 
+    order-id:
+      type: integer
+      description: Идентификатор заказа
+
     item-id:
       type: integer
       description: Идентификатор корзины
@@ -1276,7 +1287,6 @@ components:
           maxLength: 3
           pattern: "^[0-9]{3}$"
 
-
     PaymentResponse:
       type: object
 
@@ -1291,24 +1301,22 @@ components:
           type: integer
           description: Номер заказа
 
+        message:
+          type: string
+          description: Сообщение пользователю
+
         status:
           type: string
           description: Информация о статусе заказа
           enum:
-            - Preparing
-            - WaitPushTran
-            - Authorized
-            - PartPaid
-            - Funded
-            - FullyPaid
-            - Expired
-            - Cancelled
-            - Rejected
-            - Refused
-            - Closed
-            - Voided
-            - Refunded
-            - Declined
+            - PENDING
+            - CARD_SAVED
+            - FULLY_PAID
+            - REFUNDED
+
+        createdAt:
+          type: string
+          format: date-time
 
     PaymentCardRequest:
       type: object
@@ -1363,6 +1371,14 @@ components:
       type: object
 
       properties:
+        success:
+          type: boolean
+          description: Успешно ли добавлена карта
+
+        message:
+          type: string
+          description: Сообщение пользователю
+
         email:
           type: string
           description: Почта держателя карты
@@ -1370,6 +1386,19 @@ components:
         name:
           type: string
           description: Имя держателя карты
+
+        status:
+          type: string
+          description: Информация о статусе заказа
+          enum:
+            - PENDING
+            - CARD_SAVED
+            - FULLY_PAID
+            - REFUNDED
+
+        createdAt:
+          type: string
+          format: date-time
 
     CreateOrderRequest:
       type: object
@@ -1410,28 +1439,46 @@ components:
       type: object
 
       properties:
-        id:
+        success:
+          type: boolean
+          description: Успешно ли создан заказ
+
+        orderId:
           type: integer
-          description: Идентификатор ответа
+          description: Идентификатор заказа
+
+        status:
+          type: string
+          description: Информация о статусе заказа
+          enum:
+            - PENDING
+            - CARD_SAVED
+            - FULLY_PAID
+            - REFUNDED
 
         amount:
-          type: number
-          format: double
-          description: Информация о сумме созданного заказа
+          type: string
+          format: decimal
+          description: Сумма заказа (с двумя знаками после запятой)
+          pattern: "^\\d+\\.\\d{2}$"
 
         createdAt:
           type: string
           format: date-time
 
+        message:
+          type: string
+          description: Сообщение для пользователя
 
     RefundResponse:
       type: object
 
       properties:
         refund_amount:
-          type: number
-          format: double
-          description: Информация о сумме возврата
+          type: string
+          format: decimal
+          description: Сумма возврата (с двумя знаками после запятой)
+          pattern: "^\\d+\\.\\d{2}$"
 
         orderId:
           type: integer
@@ -1441,8 +1488,22 @@ components:
           type: string
           description: Информация о причинах возврата
 
-        tran:
-          type: object
+        message:
+          type: string
+          description: Сообщение пользователю
+
+        success:
+          type: boolean
+          description: Успешно ли выполнен возврат
+
+        status:
+          type: string
+          description: Информация о статусе заказа
+          enum:
+            - PENDING
+            - CARD_SAVED
+            - FULLY_PAID
+            - REFUNDED
 
     Publisher:
       type: object

@@ -5,10 +5,12 @@ import lombok.RequiredArgsConstructor;
 import org.example.api.PaymentApi;
 import org.example.model.*;
 import org.example.model.CreateOrderRequest;
+import org.example.model.CreateOrderResponse;
 import org.example.model.PaymentCardRequest;
 import org.example.model.PaymentCardResponse;
 import org.example.model.PaymentRequest;
 import org.example.model.RefundResponse;
+import org.example.model.PaymentResponse;
 import org.example.service.payment.PaymentApiInterface;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -28,18 +30,17 @@ public class PaymentApiImpl implements PaymentApi {
     }
 
     @Override
-    public ResponseEntity<CreateOrderResponse> createPayment(CreateOrderRequest createOrderRequest) {
+    public ResponseEntity<CreateOrderResponse> createPayment(@RequestBody @Valid CreateOrderRequest createOrderRequest) {
         return ResponseEntity.ok(paymentApiInterface.createPayment(createOrderRequest));
     }
 
     @Override
-    public ResponseEntity<PaymentResponse> payment(PaymentRequest paymentRequest) {
-        return ResponseEntity.ok(paymentApiInterface.payment(paymentRequest));
+    public ResponseEntity<PaymentResponse> payment(Integer orderId, @RequestBody @Valid PaymentRequest paymentRequest) {
+        return ResponseEntity.ok(paymentApiInterface.payment(orderId, paymentRequest));
     }
 
-
     @Override
-    public ResponseEntity<RefundResponse> refundPayBooksById(Integer paymentId) {
-        return ResponseEntity.ok(paymentApiInterface.refundPayBooksById(paymentId));
+    public ResponseEntity<RefundResponse> refundPayBooksById(Integer orderId) {
+        return ResponseEntity.ok(paymentApiInterface.refundPayBooksById(orderId));
     }
 }

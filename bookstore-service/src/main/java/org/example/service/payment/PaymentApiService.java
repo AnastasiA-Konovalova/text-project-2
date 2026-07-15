@@ -9,21 +9,23 @@ import org.example.exception.PaymentException;
 import org.example.exception.SumLessThenMin;
 import org.example.model.*;
 import org.example.model.Basket;
-import org.example.model.BasketDetail;
-import org.example.model.CreateOrderRequest;
 import org.example.model.CreateOrderResponse;
+import org.example.model.CreateOrderRequest;
 import org.example.model.PaymentCardRequest;
 import org.example.model.PaymentCardResponse;
 import org.example.model.PaymentRequest;
+import org.example.model.PaymentResponse;
 import org.example.model.RefundResponse;
-import org.example.model.paymentCardGateway.Card;
-import org.example.model.paymentCardGateway.PanBlock;
-import org.example.model.paymentCardGateway.PaymentCardGatewayRequest;
-import org.example.model.paymentCardGateway.TokenGetaway;
-import org.example.model.paymentMethodRequest.CVV2Block;
-import org.example.model.paymentMethodRequest.PaymentMethodRequest;
-import org.example.model.paymentMethodRequest.AuthenticationData;
-import org.example.model.paymentMethodRequest.TranData;
+import dto.paymentCard.SaveCardResponse;
+import dto.paymentCardGateway.Card;
+import dto.paymentCardGateway.PanBlock;
+import dto.paymentCardGateway.PaymentCardGatewayRequest;
+import dto.paymentCardGateway.TokenGetaway;
+import dto.paymentMethodRequest.CVV2Block;
+import dto.paymentMethodRequest.PaymentMethodRequest;
+import dto.paymentMethodRequest.AuthenticationData;
+import dto.paymentMethodRequest.TranData;
+import dto.paymentMethodResponse.PaymentExecutionResponse;
 import org.example.service.account.AccountApiInterface;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +39,7 @@ import org.example.exception.IllegalArgumentException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.List;
 
@@ -88,7 +91,9 @@ public class PaymentApiService implements PaymentApiInterface {
         Basket basket = accountApiInterface.getBasket();
         validationBasket(basket);
 
-        PaymentGatewayRequest gatewayRequest = buildGatewayRequest(basket.getTotalPrice());
+        BigDecimal totalPrice = basket.getTotalPrice();
+
+        PaymentGatewayRequest gatewayRequest = buildGatewayRequest(totalPrice);
 
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -100,7 +105,7 @@ public class PaymentApiService implements PaymentApiInterface {
 
             HttpEntity<PaymentGatewayRequest> entity = new HttpEntity<>(gatewayRequest, headers);
             ResponseEntity<OrderResponse> response = restTemplate.exchange(
-                    createOrderPath,
+                            createOrderPath,
                             HttpMethod.POST,
                             entity,
                             OrderResponse.class
@@ -122,22 +127,15 @@ public class PaymentApiService implements PaymentApiInterface {
 
             String orderStatusFromTxpg = orderDetails.getStatus();
 
-            BigDecimal sum = sumCalculatorBasketDetail(basket);
-
-            PaymentEntity payment = createPaymentEntity(sum, orderStatusFromTxpg, gatewayResponse);
-            OrderEntity order = createOrderRequest(user, payment, gatewayResponse);
+            PaymentEntity payment = createPaymentEntity(totalPrice, orderStatusFromTxpg, gatewayResponse);
+            OrderEntity order = createOrderRequest(user, payment);
 
             payment.setOrder(order);
-
-            orderRepository.save(order);
             paymentRepository.save(payment);
 
-            return new
-                    CreateOrderResponse(
-                    true,
-                    gatewayResponse,
-                    "Payment created successfully"
-            );
+            clearBasketAfterPayment();
+
+            return createOrderResponse(totalPrice, order.getId());
 
         } catch (RestClientException e) {
             throw new PaymentException("Payment service unavailable");
@@ -149,40 +147,33 @@ public class PaymentApiService implements PaymentApiInterface {
         String email = authenticationUser();
         UserEntity user = existUserEntity(email);
 
-        Basket basket = accountApiInterface.getBasket();
-        validationBasket(basket);
-
-        OrderEntity order = existOrder(user.getId());
-        PaymentEntity payment = existPayment(order.getId());
-
-        payment.setIsCardSaved(true);
-
-        paymentRepository.save(payment);
+        OrderEntity order = existOrderByUserId(user.getId());
+        PaymentEntity payment = order.getPayment();
 
         PaymentCardGatewayRequest paymentCardGatewayRequest = buildCardGatewayRequest(paymentCardRequest);
 
-        String url = paymentCardServiceUrl.replace("{id}", String.valueOf(payment.getPaymentOrderId())) + "?password=" + order.getPassword();
+        String url = paymentCardServiceUrl.replace("{id}", String.valueOf(payment.getPaymentOrderId())) + "?password=" + payment.getPassword();
 
         try {
-            ResponseEntity<PaymentCardResponse> response = restTemplate.postForEntity(
+            ResponseEntity<SaveCardResponse> response = restTemplate.postForEntity(
                             url,
                             paymentCardGatewayRequest,
-                            PaymentCardResponse.class
+                            SaveCardResponse.class
                     );
             if (!response.getStatusCode().is2xxSuccessful()) {
                 throw new PaymentException("Payment service error");
             }
 
-            PaymentCardResponse gatewayResponse = response.getBody();
+            SaveCardResponse gatewayResponse = response.getBody();
 
             if (gatewayResponse == null) {
                 throw new PaymentException("Empty response from payment service");
             }
 
-            gatewayResponse.setSuccess(true);
-            gatewayResponse.setMessage("Card details added");
+            order.setStatus(OrderStatus.CARD_SAVED);
+            paymentRepository.save(payment);
 
-            return gatewayResponse;
+            return createPaymentCardResponse(user.getEmail(), user.getSurname());
 
         } catch (RestClientException e) {
             throw new PaymentException("Payment service unavailable");
@@ -190,48 +181,56 @@ public class PaymentApiService implements PaymentApiInterface {
     }
 
     @Override
-    public PaymentResponse payment(PaymentRequest paymentRequest) {
+    public PaymentResponse payment(Integer orderId, PaymentRequest paymentRequest) {
         String email = authenticationUser();
         UserEntity user = existUserEntity(email);
 
-        Basket basket = accountApiInterface.getBasket();
-        validationBasket(basket);
+        OrderEntity order = existOrderByOrderId(orderId);
+        if (!order.getUser().getId().equals(user.getId())) {
+            throw new PaymentException("Order does not belong to the current user");
+        }
 
-        OrderEntity order = existOrder(user.getId());
-        PaymentEntity payment = existPayment(order.getId());
+        PaymentEntity payment = order.getPayment();
+        if (payment == null) {
+            throw new PaymentException("Payment not found for order: " + orderId);
+        }
 
-        validationPayment(payment);
+        if (!OrderStatus.CARD_SAVED.equals(order.getStatus())) {
+            throw new PaymentException("Status should be 'CARD_SAVED'");
+        }
 
         PaymentMethodRequest paymentMethodRequest = buildPayGatewayRequest(paymentRequest, payment);
 
-        String url = executeTransactionUrl.replace("{id}", String.valueOf(payment.getPaymentOrderId())) + "?password=" + order.getPassword();
+        String url = executeTransactionUrl.replace("{id}", String.valueOf(payment.getPaymentOrderId())) + "?password=" + payment.getPassword();
 
         try {
-            ResponseEntity<PaymentResponse> response = restTemplate.postForEntity(
+            ResponseEntity<PaymentExecutionResponse> response = restTemplate.postForEntity(
                            url,
                             paymentMethodRequest,
-                            PaymentResponse.class
+                    PaymentExecutionResponse.class
                     );
             if (!response.getStatusCode().is2xxSuccessful()) {
                 throw new PaymentException("Payment service error");
             }
 
-            PaymentResponse paymentResponse = response.getBody();
-            if (paymentResponse == null) {
+            PaymentExecutionResponse paymentExecutionResponse = response.getBody();
+            if (paymentExecutionResponse == null) {
                 throw new PaymentException("Empty response from payment service");
             }
 
+            if (!"Approved".equalsIgnoreCase(paymentExecutionResponse.getTran().getPmoResultCode())) {
+                throw new PaymentException("Status should be 'approved'");
+            }
+
             payment.setUpdatedAt(LocalDateTime.now());
+            order.setStatus(OrderStatus.FULLY_PAID);
 
             paymentRepository.save(payment);
 
-            clearBasketAfterPayment();
-
-            return paymentResponse;
+            return createPaymentResponse(order.getId());
 
         } catch (RestClientException e) {
             payment.setUpdatedAt(LocalDateTime.now());
-
             paymentRepository.save(payment);
 
             throw new PaymentException("Payment service unavailable");
@@ -239,24 +238,26 @@ public class PaymentApiService implements PaymentApiInterface {
     }
 
     @Override
-    public RefundResponse refundPayBooksById(Integer paymentId) {
+    public RefundResponse refundPayBooksById(Integer orderId) {
         String email = authenticationUser();
         UserEntity user = existUserEntity(email);
 
-        Basket basket = accountApiInterface.getBasket();
-        validationBasket(basket);
+        OrderEntity order = existOrderByOrderId(orderId);
+        if (!order.getUser().getId().equals(user.getId())) {
+            throw new PaymentException("Order does not belong to the current user");
+        }
 
-        OrderEntity order = existOrder(user.getId());
-        PaymentEntity payment = existPaymentByPaymentOrderId(paymentId);
-
-        if (payment == null) throw new NotFoundException("Payment not found for order: " + paymentId);
+        PaymentEntity payment = order.getPayment();
+        if (payment == null) {
+            throw new PaymentException("Payment not found for order: " + orderId);
+        }
 
         BigDecimal totalRefundAmount = BigDecimal.ZERO;
         totalRefundAmount = totalRefundAmount.add(payment.getSumOfPay());
 
         PaymentMethodRequest paymentMethodRequest = buildRefundPayGatewayRequest(totalRefundAmount);
 
-        String url = executeTransactionUrl.replace("{id}", String.valueOf(payment.getPaymentOrderId())) + "?password=" + order.getPassword();
+        String url = executeTransactionUrl.replace("{id}", String.valueOf(payment.getPaymentOrderId())) + "?password=" + payment.getPassword();
 
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -268,27 +269,37 @@ public class PaymentApiService implements PaymentApiInterface {
 
             HttpEntity<PaymentMethodRequest> entity = new HttpEntity<>(paymentMethodRequest, headers);
 
-            ResponseEntity<RefundResponse> response = restTemplate.exchange(
+            ResponseEntity<PaymentExecutionResponse> response = restTemplate.exchange(
                             url,
                             HttpMethod.POST,
                             entity,
-                            RefundResponse.class
+                    PaymentExecutionResponse.class
                     );
             if (!response.getStatusCode().is2xxSuccessful()) {
                 throw new PaymentException("Payment service error");
             }
 
-            RefundResponse refundResponse = response.getBody();
-            if (refundResponse == null) {
+            PaymentExecutionResponse paymentExecutionResponse = response.getBody();
+            if (paymentExecutionResponse == null) {
                 throw new PaymentException("Empty response from payment service");
             }
 
+            if (!"Approved".equalsIgnoreCase(paymentExecutionResponse.getTran().getPmoResultCode())) {
+                throw new PaymentException("Status should be 'approved'");
+            }
+
+            if (OrderStatus.REFUNDED.equals(order.getStatus())) {
+                throw new PaymentException("A return cannot be processed more than once");
+            }
+
+            if (!OrderStatus.FULLY_PAID.equals(order.getStatus())) {
+                throw new PaymentException("Only fully paid orders can be refunded");
+            }
             payment.setUpdatedAt(LocalDateTime.now());
-            refundResponse = changeRefundResponse(refundResponse, totalRefundAmount, payment.getPaymentOrderId());
 
             paymentRepository.save(payment);
 
-            return refundResponse;
+            return createResundResponse(totalRefundAmount, order.getId());
 
         } catch (RestClientException e) {
             throw new PaymentException("Payment service unavailable");
@@ -304,22 +315,12 @@ public class PaymentApiService implements PaymentApiInterface {
         return userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
     }
 
-    private OrderEntity existOrder(Integer userId) {
+    private OrderEntity existOrderByUserId(Integer userId) {
         return orderRepository.findByUserId(userId).orElseThrow(() -> new NotFoundException("Order not found"));
     }
 
-    private PaymentEntity existPayment(Integer orderId) {
-        return paymentRepository.findByOrderId(orderId).orElseThrow(() -> new NotFoundException("Payment not found"));
-    }
-
-    private PaymentEntity existPaymentByPaymentOrderId(Integer paymentId) {
-        return paymentRepository.findByPaymentOrderId(paymentId).orElseThrow(() -> new NotFoundException("Payment not found"));
-    }
-
-    private void validationPayment(PaymentEntity payment) {
-        if (!payment.getIsCardSaved()) {
-            throw new PaymentException("Card details aren't exist");
-        }
+    private OrderEntity existOrderByOrderId(Integer orderId) {
+        return orderRepository.findById(orderId).orElseThrow(() -> new NotFoundException("Order not found"));
     }
 
     private void validationBasket(Basket basket) {
@@ -337,27 +338,67 @@ public class PaymentApiService implements PaymentApiInterface {
         payment.setCreatedAt(LocalDateTime.now());
         payment.setUpdatedAt(LocalDateTime.now());
         payment.setStatus(orderStatusFromTxpg);
+        payment.setPassword(gatewayResponse.getOrder().getPassword());
 
-        return paymentRepository.save(payment);
+        return payment;
     }
 
-    private OrderEntity createOrderRequest(UserEntity user, PaymentEntity payment, OrderResponse gatewayResponse) {
+    private OrderEntity createOrderRequest(UserEntity user, PaymentEntity payment) {
         OrderEntity order = new OrderEntity();
         order.setUser(user);
         order.setRecipientName(user.getSurname());
         order.setCreatedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
         order.setPayment(payment);
-        order.setPassword(gatewayResponse.getOrder().getPassword());
+        order.setStatus(OrderStatus.PENDING);
 
         return order;
     }
 
-    private RefundResponse changeRefundResponse(RefundResponse refundResponse, BigDecimal totalRefundAmount, Integer paymentOrderId) {
-        refundResponse.setRefundAmount(totalRefundAmount.doubleValue());
-        refundResponse.setOrderId(paymentOrderId);
+    private CreateOrderResponse createOrderResponse(BigDecimal totalPrice, Integer orderId) {
+        CreateOrderResponse createOrderResponse = new CreateOrderResponse();
+        createOrderResponse.setAmount(totalPrice);
+        createOrderResponse.setOrderId(orderId);
+        createOrderResponse.setMessage("Order is created");
+        createOrderResponse.setStatus(CreateOrderResponse.StatusEnum.PENDING);
+        createOrderResponse.setSuccess(true);
+        createOrderResponse.setCreatedAt(OffsetDateTime.now());
+        return createOrderResponse;
+    }
+
+    private PaymentCardResponse createPaymentCardResponse(String email, String surname) {
+        PaymentCardResponse paymentCardResponse = new PaymentCardResponse();
+        paymentCardResponse.setSuccess(true);
+        paymentCardResponse.setEmail(email);
+        paymentCardResponse.setMessage("Card details added");
+        paymentCardResponse.setName(surname);
+        paymentCardResponse.setStatus(PaymentCardResponse.StatusEnum.CARD_SAVED);
+        paymentCardResponse.setCreatedAt(OffsetDateTime.now());
+
+        return paymentCardResponse;
+    }
+
+    private RefundResponse createResundResponse(BigDecimal totalRefundAmount, Integer orderId) {
+        RefundResponse refundResponse = new RefundResponse();
+        refundResponse.setRefundAmount(totalRefundAmount);
         refundResponse.setReason("I don't like this book anymore");
+        refundResponse.setStatus(RefundResponse.StatusEnum.REFUNDED);
+        refundResponse.setMessage("Refund made");
+        refundResponse.setSuccess(true);
+        refundResponse.setOrderId(orderId);
+
         return refundResponse;
+    }
+
+    private PaymentResponse createPaymentResponse(Integer orderId) {
+        PaymentResponse paymentResponse = new PaymentResponse();
+        paymentResponse.setPaymentMethod(PaymentResponse.PaymentMethodEnum.CARD);
+        paymentResponse.setStatus(PaymentResponse.StatusEnum.FULLY_PAID);
+        paymentResponse.setOrderId(orderId);
+        paymentResponse.setMessage("Payment has been made");
+        paymentResponse.setCreatedAt(OffsetDateTime.now());
+
+        return paymentResponse;
     }
 
     private PaymentGatewayRequest buildGatewayRequest(BigDecimal totalPrice) {
@@ -447,13 +488,5 @@ public class PaymentApiService implements PaymentApiInterface {
         basket.setUpdatedAt(LocalDateTime.now());
 
         basketRepository.save(basket);
-    }
-
-    private BigDecimal sumCalculatorBasketDetail(Basket basket) {
-        BigDecimal sum = BigDecimal.ZERO;
-        for (BasketDetail basketDetail : basket.getBasketDetails()) {
-            sum = basketDetail.getPrice().add(sum);
-        }
-        return sum;
     }
 }

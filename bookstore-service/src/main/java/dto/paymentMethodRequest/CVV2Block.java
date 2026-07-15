@@ -1,4 +1,4 @@
-package org.example.model.paymentMethodRequest;
+package dto.paymentMethodRequest;
 
 import lombok.Getter;
 import lombok.Setter;

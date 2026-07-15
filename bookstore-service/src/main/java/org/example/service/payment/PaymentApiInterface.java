@@ -1,10 +1,12 @@
 package org.example.service.payment;
 
-import org.example.model.*;
 import org.example.model.CreateOrderRequest;
+import org.example.model.CreateOrderResponse;
 import org.example.model.PaymentCardRequest;
+import org.example.model.PaymentCardResponse;
 import org.example.model.PaymentRequest;
 import org.example.model.RefundResponse;
+import org.example.model.PaymentResponse;
 
 public interface PaymentApiInterface {
 
@@ -12,7 +14,7 @@ public interface PaymentApiInterface {
 
     PaymentCardResponse saveCard(PaymentCardRequest paymentCardRequest);
 
-    PaymentResponse payment(PaymentRequest paymentRequest);
+    PaymentResponse payment(Integer orderId, PaymentRequest paymentRequest);
 
-    RefundResponse refundPayBooksById(Integer paymentId);
+    RefundResponse refundPayBooksById(Integer orderId);
 }

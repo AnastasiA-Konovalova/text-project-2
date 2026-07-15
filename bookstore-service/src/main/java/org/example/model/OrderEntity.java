@@ -20,12 +20,12 @@ public class OrderEntity {
     @JoinColumn(name = "user_id")
     private UserEntity user;
 
-    @ManyToOne
-    @JoinColumn(name = "payments_id")
+    @OneToOne(mappedBy = "order")
     private PaymentEntity payment;
 
-    @Column(name = "password")
-    private String password;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private OrderStatus status;
 
     @Column(name = "recipient_name")
     private String recipientName;

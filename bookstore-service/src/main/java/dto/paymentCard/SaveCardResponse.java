@@ -1,11 +1,12 @@
-package org.example.model.paymentCard;
+package dto.paymentCard;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Setter
 @Getter
-public class OrderData {
+public class SaveCardResponse {
+    private String status;
     private DCC dcc;
     private Surcharge surcharge;
     private String cvv2AuthStatus;

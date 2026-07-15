@@ -1,4 +1,4 @@
-package org.example.model.paymentCard;
+package dto.paymentCard;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -17,7 +17,7 @@ public class PaymentEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "order_id")
     private OrderEntity order;
 
@@ -30,8 +30,8 @@ public class PaymentEntity {
     @Column(name = "status")
     private String status;
 
-    @Column(name = "is_card_saved")
-    private Boolean isCardSaved;
+    @Column(name = "password")
+    private String password;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
