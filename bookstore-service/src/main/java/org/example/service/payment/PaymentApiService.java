@@ -15,6 +15,7 @@ import org.example.model.PaymentCardRequest;
 import org.example.model.PaymentCardResponse;
 import org.example.model.PaymentRequest;
 import org.example.model.PaymentResponse;
+import org.example.model.PaymentStatus;
 import org.example.model.RefundResponse;
 import dto.paymentCard.SaveCardResponse;
 import dto.paymentCardGateway.Card;
@@ -80,6 +81,12 @@ public class PaymentApiService implements PaymentApiInterface {
 
     private static final String CURRENCY = "USD";
 
+    public static final String PHASE_SINGLE = "Single";
+
+    public static final String TXPG_TYPE_REFUND = "Refund";
+
+    public static final String AUTH_HEADER_BASIC = "Basic ";
+
     @Autowired
     private RestTemplate restTemplate;
 
@@ -95,89 +102,74 @@ public class PaymentApiService implements PaymentApiInterface {
 
         PaymentGatewayRequest gatewayRequest = buildGatewayRequest(totalPrice);
 
+        OrderResponse gatewayResponse;
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            String auth = Base64.getEncoder()
-                    .encodeToString(authentication.getBytes());
-
-            headers.set("Authorization", "Basic " + auth);
-
-            HttpEntity<PaymentGatewayRequest> entity = new HttpEntity<>(gatewayRequest, headers);
-            ResponseEntity<OrderResponse> response = restTemplate.exchange(
-                            createOrderPath,
-                            HttpMethod.POST,
-                            entity,
-                            OrderResponse.class
-                    );
-
-            if (!response.getStatusCode().is2xxSuccessful()) {
-                throw new PaymentException("Payment service error");
-            }
-
-            OrderResponse gatewayResponse = response.getBody();
-            if (gatewayResponse == null) {
-                throw new PaymentException("Empty response from payment service");
-            }
-
-            OrderDetails orderDetails = gatewayResponse.getOrder();
-            if (orderDetails == null) {
-             throw new PaymentException("Invalid response: missing order details");
-            }
-
-            String orderStatusFromTxpg = orderDetails.getStatus();
-
-            PaymentEntity payment = createPaymentEntity(totalPrice, orderStatusFromTxpg, gatewayResponse);
-            OrderEntity order = createOrderRequest(user, payment);
-
-            payment.setOrder(order);
-            paymentRepository.save(payment);
-
-            clearBasketAfterPayment();
-
-            return createOrderResponse(totalPrice, order.getId());
-
+            gatewayResponse = callTxpgCreatePayment(gatewayRequest);
         } catch (RestClientException e) {
-            throw new PaymentException("Payment service unavailable");
+            throw new PaymentException("Payment service unavailable", e);
         }
+        if (gatewayResponse == null) {
+            throw new PaymentException("Empty response from payment service");
+        }
+
+        OrderDetails orderDetails = gatewayResponse.getOrder();
+        if (orderDetails == null) {
+            throw new PaymentException("Invalid response: missing order details");
+        }
+
+        String orderStatusFromTxpg = orderDetails.getStatus();
+
+        PaymentEntity payment = createPaymentEntity(totalPrice, orderStatusFromTxpg, gatewayResponse);
+        OrderEntity order = createOrderEntity(user, payment, createOrderRequest);
+
+        payment.setOrder(order);
+        paymentRepository.save(payment);
+
+        clearBasketAfterPayment();
+
+        return createOrderResponse(totalPrice, order);
     }
 
     @Override
-    public PaymentCardResponse saveCard(PaymentCardRequest paymentCardRequest) {
+    public PaymentCardResponse saveCard(Integer orderId, PaymentCardRequest paymentCardRequest) {
         String email = authenticationUser();
         UserEntity user = existUserEntity(email);
 
-        OrderEntity order = existOrderByUserId(user.getId());
+        OrderEntity order = existOrderByOrderId(orderId);
+        if (!order.getUser().getId().equals(user.getId())) {
+            throw new PaymentException("Order does not belong to the current user");
+        }
+
         PaymentEntity payment = order.getPayment();
+        if (payment == null) {
+            throw new PaymentException("Payment not found for order: " + orderId);
+        }
 
         PaymentCardGatewayRequest paymentCardGatewayRequest = buildCardGatewayRequest(paymentCardRequest);
 
         String url = paymentCardServiceUrl.replace("{id}", String.valueOf(payment.getPaymentOrderId())) + "?password=" + payment.getPassword();
 
+        SaveCardResponse gatewayResponse;
+
         try {
-            ResponseEntity<SaveCardResponse> response = restTemplate.postForEntity(
-                            url,
-                            paymentCardGatewayRequest,
-                            SaveCardResponse.class
-                    );
-            if (!response.getStatusCode().is2xxSuccessful()) {
-                throw new PaymentException("Payment service error");
-            }
-
-            SaveCardResponse gatewayResponse = response.getBody();
-
-            if (gatewayResponse == null) {
-                throw new PaymentException("Empty response from payment service");
-            }
-
-            order.setStatus(OrderStatus.CARD_SAVED);
-            paymentRepository.save(payment);
-
-            return createPaymentCardResponse(user.getEmail(), user.getSurname());
-
+            gatewayResponse = callTxpgSaveCard(url, paymentCardGatewayRequest);
         } catch (RestClientException e) {
-            throw new PaymentException("Payment service unavailable");
+            throw new PaymentException("Payment service unavailable", e);
         }
+
+        if (gatewayResponse == null) {
+            throw new PaymentException("Empty response from payment service");
+        }
+
+        payment.setUpdatedAt(LocalDateTime.now());
+
+        order.setPayerEmail(paymentCardRequest.getEmail());
+        order.setPayerName(paymentCardRequest.getName());
+        order.setStatus(OrderStatus.CARD_SAVED);
+
+        paymentRepository.save(payment);
+
+        return createPaymentCardResponse(user.getEmail(), user.getSurname(), order);
     }
 
     @Override
@@ -203,38 +195,30 @@ public class PaymentApiService implements PaymentApiInterface {
 
         String url = executeTransactionUrl.replace("{id}", String.valueOf(payment.getPaymentOrderId())) + "?password=" + payment.getPassword();
 
+        PaymentExecutionResponse paymentExecutionResponse;
+
         try {
-            ResponseEntity<PaymentExecutionResponse> response = restTemplate.postForEntity(
-                           url,
-                            paymentMethodRequest,
-                    PaymentExecutionResponse.class
-                    );
-            if (!response.getStatusCode().is2xxSuccessful()) {
-                throw new PaymentException("Payment service error");
-            }
-
-            PaymentExecutionResponse paymentExecutionResponse = response.getBody();
-            if (paymentExecutionResponse == null) {
-                throw new PaymentException("Empty response from payment service");
-            }
-
-            if (!"Approved".equalsIgnoreCase(paymentExecutionResponse.getTran().getPmoResultCode())) {
-                throw new PaymentException("Status should be 'approved'");
-            }
-
-            payment.setUpdatedAt(LocalDateTime.now());
-            order.setStatus(OrderStatus.FULLY_PAID);
-
-            paymentRepository.save(payment);
-
-            return createPaymentResponse(order.getId());
-
+            paymentExecutionResponse = callTxpgPayment(url, paymentMethodRequest);
         } catch (RestClientException e) {
             payment.setUpdatedAt(LocalDateTime.now());
             paymentRepository.save(payment);
 
-            throw new PaymentException("Payment service unavailable");
+            throw new PaymentException("Payment service unavailable", e);
         }
+        if (paymentExecutionResponse == null) {
+            throw new PaymentException("Empty response from payment service");
+        }
+
+        if (!"Approved".equalsIgnoreCase(paymentExecutionResponse.getTran().getPmoResultCode())) {
+            throw new PaymentException("Status should be 'approved'");
+        }
+
+        payment.setUpdatedAt(LocalDateTime.now());
+        order.setStatus(OrderStatus.FULLY_PAID);
+
+        paymentRepository.save(payment);
+
+        return createPaymentResponse(order);
     }
 
     @Override
@@ -252,58 +236,39 @@ public class PaymentApiService implements PaymentApiInterface {
             throw new PaymentException("Payment not found for order: " + orderId);
         }
 
-        BigDecimal totalRefundAmount = BigDecimal.ZERO;
-        totalRefundAmount = totalRefundAmount.add(payment.getSumOfPay());
-
-        PaymentMethodRequest paymentMethodRequest = buildRefundPayGatewayRequest(totalRefundAmount);
+        PaymentMethodRequest paymentMethodRequest = buildRefundPayGatewayRequest(payment.getSumOfPay());
 
         String url = executeTransactionUrl.replace("{id}", String.valueOf(payment.getPaymentOrderId())) + "?password=" + payment.getPassword();
 
+        PaymentExecutionResponse paymentExecutionResponse;
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            String auth = Base64.getEncoder()
-                    .encodeToString(authentication.getBytes());
-
-            headers.set("Authorization", "Basic " + auth);
-
-            HttpEntity<PaymentMethodRequest> entity = new HttpEntity<>(paymentMethodRequest, headers);
-
-            ResponseEntity<PaymentExecutionResponse> response = restTemplate.exchange(
-                            url,
-                            HttpMethod.POST,
-                            entity,
-                    PaymentExecutionResponse.class
-                    );
-            if (!response.getStatusCode().is2xxSuccessful()) {
-                throw new PaymentException("Payment service error");
-            }
-
-            PaymentExecutionResponse paymentExecutionResponse = response.getBody();
-            if (paymentExecutionResponse == null) {
-                throw new PaymentException("Empty response from payment service");
-            }
-
-            if (!"Approved".equalsIgnoreCase(paymentExecutionResponse.getTran().getPmoResultCode())) {
-                throw new PaymentException("Status should be 'approved'");
-            }
-
-            if (OrderStatus.REFUNDED.equals(order.getStatus())) {
-                throw new PaymentException("A return cannot be processed more than once");
-            }
-
-            if (!OrderStatus.FULLY_PAID.equals(order.getStatus())) {
-                throw new PaymentException("Only fully paid orders can be refunded");
-            }
-            payment.setUpdatedAt(LocalDateTime.now());
-
-            paymentRepository.save(payment);
-
-            return createResundResponse(totalRefundAmount, order.getId());
-
+            paymentExecutionResponse = callTxpgRefund(url, paymentMethodRequest);
         } catch (RestClientException e) {
-            throw new PaymentException("Payment service unavailable");
+            throw new PaymentException("Payment service unavailable", e);
         }
+
+        if (paymentExecutionResponse == null) {
+            throw new PaymentException("Empty response from payment service");
+        }
+
+        if (!"Approved".equalsIgnoreCase(paymentExecutionResponse.getTran().getPmoResultCode())) {
+            throw new PaymentException("Status should be 'approved'");
+        }
+
+        if (OrderStatus.REFUNDED.equals(order.getStatus())) {
+            throw new PaymentException("A return cannot be processed more than once");
+        }
+
+        if (!OrderStatus.FULLY_PAID.equals(order.getStatus())) {
+            throw new PaymentException("Only fully paid orders can be refunded");
+        }
+
+        order.setStatus(OrderStatus.REFUNDED);
+        payment.setUpdatedAt(LocalDateTime.now());
+
+        paymentRepository.save(payment);
+
+        return createRefundResponse(order);
     }
 
     private String authenticationUser() {
@@ -315,20 +280,18 @@ public class PaymentApiService implements PaymentApiInterface {
         return userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
     }
 
-    private OrderEntity existOrderByUserId(Integer userId) {
-        return orderRepository.findByUserId(userId).orElseThrow(() -> new NotFoundException("Order not found"));
-    }
-
     private OrderEntity existOrderByOrderId(Integer orderId) {
         return orderRepository.findById(orderId).orElseThrow(() -> new NotFoundException("Order not found"));
     }
 
     private void validationBasket(Basket basket) {
         if (basket == null) throw new NotFoundException("Basket does not exist");
-
+        if (basket.getBasketDetails() == null || basket.getBasketDetails().isEmpty())
+            throw new PaymentException("Basket has no items");
         BigDecimal totalPrice = basket.getTotalPrice();
         if (totalPrice == null) throw new IllegalArgumentException("Total price can't be null");
-        if (totalPrice.compareTo(BigDecimal.ZERO) < 0) throw new SumLessThenMin("Total price can't be less then 1.00 rub");
+        if (totalPrice.compareTo(BigDecimal.ZERO) < 0)
+            throw new SumLessThenMin("Total price can't be less then 1.00 rub");
     }
 
     private PaymentEntity createPaymentEntity(BigDecimal sum, String orderStatusFromTxpg, OrderResponse gatewayResponse) {
@@ -343,10 +306,12 @@ public class PaymentApiService implements PaymentApiInterface {
         return payment;
     }
 
-    private OrderEntity createOrderRequest(UserEntity user, PaymentEntity payment) {
+    private OrderEntity createOrderEntity(UserEntity user, PaymentEntity payment, CreateOrderRequest createOrderRequest) {
         OrderEntity order = new OrderEntity();
         order.setUser(user);
-        order.setRecipientName(user.getSurname());
+        order.setRecipientName(createOrderRequest.getRecipientName());
+        order.setDeliveryAddress(createOrderRequest.getDeliveryAddress());
+        order.setRecipientPhone(createOrderRequest.getRecipientPhone());
         order.setCreatedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
         order.setPayment(payment);
@@ -355,47 +320,39 @@ public class PaymentApiService implements PaymentApiInterface {
         return order;
     }
 
-    private CreateOrderResponse createOrderResponse(BigDecimal totalPrice, Integer orderId) {
+    private CreateOrderResponse createOrderResponse(BigDecimal totalPrice,OrderEntity order) {
         CreateOrderResponse createOrderResponse = new CreateOrderResponse();
         createOrderResponse.setAmount(totalPrice);
-        createOrderResponse.setOrderId(orderId);
-        createOrderResponse.setMessage("Order is created");
-        createOrderResponse.setStatus(CreateOrderResponse.StatusEnum.PENDING);
-        createOrderResponse.setSuccess(true);
+        createOrderResponse.setOrderId(order.getId());
+        createOrderResponse.setStatus(mapOrderStatusToPaymentStatus(order.getStatus()));
         createOrderResponse.setCreatedAt(OffsetDateTime.now());
         return createOrderResponse;
     }
 
-    private PaymentCardResponse createPaymentCardResponse(String email, String surname) {
+    private PaymentCardResponse createPaymentCardResponse(String email, String surname, OrderEntity order) {
         PaymentCardResponse paymentCardResponse = new PaymentCardResponse();
-        paymentCardResponse.setSuccess(true);
         paymentCardResponse.setEmail(email);
-        paymentCardResponse.setMessage("Card details added");
         paymentCardResponse.setName(surname);
-        paymentCardResponse.setStatus(PaymentCardResponse.StatusEnum.CARD_SAVED);
+        paymentCardResponse.setStatus(mapOrderStatusToPaymentStatus(order.getStatus()));
         paymentCardResponse.setCreatedAt(OffsetDateTime.now());
 
         return paymentCardResponse;
     }
 
-    private RefundResponse createResundResponse(BigDecimal totalRefundAmount, Integer orderId) {
+    private RefundResponse createRefundResponse(OrderEntity order) {
         RefundResponse refundResponse = new RefundResponse();
-        refundResponse.setRefundAmount(totalRefundAmount);
-        refundResponse.setReason("I don't like this book anymore");
-        refundResponse.setStatus(RefundResponse.StatusEnum.REFUNDED);
-        refundResponse.setMessage("Refund made");
-        refundResponse.setSuccess(true);
-        refundResponse.setOrderId(orderId);
+        refundResponse.setRefundAmount(order.getPayment().getSumOfPay());
+        refundResponse.setStatus(mapOrderStatusToPaymentStatus(order.getStatus()));
+        refundResponse.setOrderId(order.getId());
 
         return refundResponse;
     }
 
-    private PaymentResponse createPaymentResponse(Integer orderId) {
+    private PaymentResponse createPaymentResponse(OrderEntity order) {
         PaymentResponse paymentResponse = new PaymentResponse();
         paymentResponse.setPaymentMethod(PaymentResponse.PaymentMethodEnum.CARD);
-        paymentResponse.setStatus(PaymentResponse.StatusEnum.FULLY_PAID);
-        paymentResponse.setOrderId(orderId);
-        paymentResponse.setMessage("Payment has been made");
+        paymentResponse.setStatus(mapOrderStatusToPaymentStatus(order.getStatus()));
+        paymentResponse.setOrderId(order.getId());
         paymentResponse.setCreatedAt(OffsetDateTime.now());
 
         return paymentResponse;
@@ -406,7 +363,6 @@ public class PaymentApiService implements PaymentApiInterface {
         order.setTypeRid(orderTypeRid);
         order.setCurrency(CURRENCY);
         order.setLanguage(LANGUAGE);
-
         order.setAmount(totalPrice);
 
         PaymentGatewayRequest gatewayRequest = new PaymentGatewayRequest();
@@ -431,8 +387,6 @@ public class PaymentApiService implements PaymentApiInterface {
     }
 
     private PaymentMethodRequest buildPayGatewayRequest(PaymentRequest paymentRequest, PaymentEntity paymentEntity) {
-        String phase = "Single";
-
         TranData tranData = new TranData();
         AuthenticationData authenticationData = new AuthenticationData();
         CVV2Block cvv2Block = new CVV2Block();
@@ -443,7 +397,7 @@ public class PaymentApiService implements PaymentApiInterface {
             tranData.setAuthentication(authenticationData);
         }
 
-        tranData.setPhase(phase);
+        tranData.setPhase(PHASE_SINGLE);
         tranData.setAmount(paymentEntity.getSumOfPay().toString());
 
         PaymentMethodRequest paymentMethodRequest = new PaymentMethodRequest();
@@ -453,13 +407,10 @@ public class PaymentApiService implements PaymentApiInterface {
     }
 
     private PaymentMethodRequest buildRefundPayGatewayRequest(BigDecimal totalAmount) {
-        String phase = "Single";
-        String type = "Refund";
-
         TranData tranData = new TranData();
-        tranData.setPhase(phase);
+        tranData.setPhase(PHASE_SINGLE);
         tranData.setAmount(totalAmount.toString());
-        tranData.setType(type);
+        tranData.setType(TXPG_TYPE_REFUND);
 
         PaymentMethodRequest paymentMethodRequest = new PaymentMethodRequest();
         paymentMethodRequest.setTran(tranData);
@@ -488,5 +439,86 @@ public class PaymentApiService implements PaymentApiInterface {
         basket.setUpdatedAt(LocalDateTime.now());
 
         basketRepository.save(basket);
+    }
+
+    private OrderResponse callTxpgCreatePayment(PaymentGatewayRequest gatewayRequest) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        String auth = Base64.getEncoder()
+                .encodeToString(authentication.getBytes());
+
+        headers.set("Authorization", AUTH_HEADER_BASIC + auth);
+
+        HttpEntity<PaymentGatewayRequest> entity = new HttpEntity<>(gatewayRequest, headers);
+        ResponseEntity<OrderResponse> response = restTemplate.exchange(
+                createOrderPath,
+                HttpMethod.POST,
+                entity,
+                OrderResponse.class
+        );
+
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new PaymentException("Payment service error");
+        }
+        return response.getBody();
+    }
+
+    private SaveCardResponse callTxpgSaveCard(String url, PaymentCardGatewayRequest paymentCardGatewayRequest) {
+        ResponseEntity<SaveCardResponse> response = restTemplate.postForEntity(
+                url,
+                paymentCardGatewayRequest,
+                SaveCardResponse.class
+        );
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new PaymentException("Payment service error");
+        }
+        return response.getBody();
+    }
+
+    private PaymentExecutionResponse callTxpgPayment(String url, PaymentMethodRequest paymentMethodRequest) {
+        ResponseEntity<PaymentExecutionResponse> response = restTemplate.postForEntity(
+                url,
+                paymentMethodRequest,
+                PaymentExecutionResponse.class
+        );
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new PaymentException("Payment service error");
+        }
+        return response.getBody();
+    }
+
+    private PaymentExecutionResponse callTxpgRefund(String url, PaymentMethodRequest paymentMethodRequest) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        String auth = Base64.getEncoder()
+                .encodeToString(authentication.getBytes());
+
+        headers.set("Authorization", AUTH_HEADER_BASIC + auth);
+
+        HttpEntity<PaymentMethodRequest> entity = new HttpEntity<>(paymentMethodRequest, headers);
+
+        ResponseEntity<PaymentExecutionResponse> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                entity,
+                PaymentExecutionResponse.class
+        );
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new PaymentException("Payment service error");
+        }
+        return response.getBody();
+    }
+
+    private PaymentStatus mapOrderStatusToPaymentStatus(OrderStatus orderStatus) {
+        if (orderStatus == null) {
+            return PaymentStatus.PENDING;
+        }
+
+        return switch (orderStatus) {
+            case CARD_SAVED -> PaymentStatus.CARD_SAVED;
+            case FULLY_PAID -> PaymentStatus.FULLY_PAID;
+            case REFUNDED -> PaymentStatus.REFUNDED;
+            default -> PaymentStatus.PENDING;
+        };
     }
 }

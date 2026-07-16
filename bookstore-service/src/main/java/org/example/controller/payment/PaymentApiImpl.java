@@ -25,8 +25,8 @@ public class PaymentApiImpl implements PaymentApi {
     private final PaymentApiInterface paymentApiInterface;
 
     @Override
-    public ResponseEntity<PaymentCardResponse> saveCard(@RequestBody @Valid PaymentCardRequest paymentCardRequest) {
-        return ResponseEntity.ok(paymentApiInterface.saveCard(paymentCardRequest));
+    public ResponseEntity<PaymentCardResponse> saveCard(Integer orderId, @RequestBody @Valid PaymentCardRequest paymentCardRequest) {
+        return ResponseEntity.ok(paymentApiInterface.saveCard(orderId, paymentCardRequest));
     }
 
     @Override

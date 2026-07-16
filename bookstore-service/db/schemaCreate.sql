@@ -117,6 +117,10 @@ CREATE TABLE IF NOT EXISTS basket_detail (
            user_id BIGINT NOT NULL,
            status VARCHAR NOT NULL DEFAULT 'PENDING',
            recipient_name VARCHAR(255) NOT NULL,
+           delivery_address VARCHAR(255) NOT NULL,
+           recipient_phone VARCHAR(255) NOT NULL,
+           payer_email VARCHAR(255),
+           payer_name VARCHAR(255),
            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
            CONSTRAINT fk_users FOREIGN KEY (user_id) REFERENCES users(id)

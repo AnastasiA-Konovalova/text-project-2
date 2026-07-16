@@ -45,7 +45,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n\t\"email\": \"email4@email\",\n    \"password\": \"123456789\"\n}",
+              "raw": "{\n\t\"email\": \"email5@email\",\n    \"password\": \"123456789\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -113,7 +113,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n\t\"name\": \"Olga\",\n    \"surname\": \"Landau\",\n    \"middle_name\": \"Nikolaevna\",\n    \"email\": \"email4@email\",\n    \"phone_number\": \"+78965423640\",\n    \"password\": \"123456789\"\n}",
+              "raw": "{\n\t\"name\": \"Olga\",\n    \"surname\": \"Landau\",\n    \"middle_name\": \"Nikolaevna\",\n    \"email\": \"email5@email\",\n    \"phone_number\": \"+78965423640\",\n    \"password\": \"123456789\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -872,7 +872,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{supabase_service_role_api_key_0z9j}}",
+                  "value": "{{json_web_token_0fdt}}",
                   "type": "string"
                 }
               ]
@@ -1141,7 +1141,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{json_web_token_0z9j}}",
+                  "value": "{{json_web_token_0fdt}}",
                   "type": "string"
                 }
               ]
@@ -1181,7 +1181,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{auth_secret_0z9j}}",
+                  "value": "{{auth_secret_0fdt}}",
                   "type": "string"
                 }
               ]
@@ -1201,10 +1201,10 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"PAN\": \"3985624710000142\",\n    \"expiration\": \"1226\",\n    \"CVV\": \"123\",\n    \"email\": \"user@example.com\",\n    \"name\": \"John Doe\"\n}"
+              "raw": "{\n    \"PAN\": \"3985624710000142\",\n    \"expiration\": \"1226\",\n    \"email\": \"user@example.com\",\n    \"name\": \"John Doe\"\n}"
             },
             "url": {
-              "raw": "http://localhost:8081/payment/card",
+              "raw": "http://localhost:8081/payment/card/2",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -1212,7 +1212,8 @@
               "port": "8081",
               "path": [
                 "payment",
-                "card"
+                "card",
+                "2"
               ]
             }
           },
@@ -1226,7 +1227,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{auth_secret_0z9j}}",
+                  "value": "{{supabase_service_role_api_key_0fdt}}",
                   "type": "string"
                 }
               ]
@@ -1254,14 +1255,15 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8081/payment",
+              "raw": "http://localhost:8081/payment/2",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8081",
               "path": [
-                "payment"
+                "payment",
+                "2"
               ]
             }
           },
@@ -1291,7 +1293,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{auth_secret_0z9j}}",
+                  "value": "{{json_web_token_0fdt}}",
                   "type": "string"
                 }
               ]
@@ -1308,7 +1310,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8081/payment/782582/refund",
+              "raw": "http://localhost:8081/payment/2/refund",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -1316,7 +1318,7 @@
               "port": "8081",
               "path": [
                 "payment",
-                "782582",
+                "2",
                 "refund"
               ]
             },
@@ -1378,6 +1380,18 @@
     },
     {
       "key": "supabase_service_role_api_key_0z9j",
+      "secret": true
+    },
+    {
+      "key": "auth_secret_0fdt",
+      "secret": true
+    },
+    {
+      "key": "json_web_token_0fdt",
+      "secret": true
+    },
+    {
+      "key": "supabase_service_role_api_key_0fdt",
       "secret": true
     }
   ]

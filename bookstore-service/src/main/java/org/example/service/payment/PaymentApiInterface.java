@@ -12,7 +12,7 @@ public interface PaymentApiInterface {
 
     CreateOrderResponse createPayment(CreateOrderRequest createOrderRequest);
 
-    PaymentCardResponse saveCard(PaymentCardRequest paymentCardRequest);
+    PaymentCardResponse saveCard(Integer orderId, PaymentCardRequest paymentCardRequest);
 
     PaymentResponse payment(Integer orderId, PaymentRequest paymentRequest);
 

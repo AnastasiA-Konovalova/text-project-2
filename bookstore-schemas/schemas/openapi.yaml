@@ -398,7 +398,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /payment/card:
+  /payment/card/{orderId}:
     post:
       tags:
         - payment
@@ -408,6 +408,13 @@ paths:
 
       security:
         - bearerAuth: []
+
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/order-id'
 
       requestBody:
         required: true
@@ -1069,7 +1076,6 @@ components:
         default: 0
 
   schemas:
-
     book-id:
       type: integer
       description: Идентификатор книги
@@ -1109,6 +1115,15 @@ components:
     publisherSeries-id:
       type: integer
       description: Идентификатор серии
+
+    PaymentStatus:
+      type: string
+      description: Статус платежа
+      enum:
+        - PENDING
+        - CARD_SAVED
+        - FULLY_PAID
+        - REFUNDED
 
     Book:
       type: object
@@ -1301,18 +1316,8 @@ components:
           type: integer
           description: Номер заказа
 
-        message:
-          type: string
-          description: Сообщение пользователю
-
         status:
-          type: string
-          description: Информация о статусе заказа
-          enum:
-            - PENDING
-            - CARD_SAVED
-            - FULLY_PAID
-            - REFUNDED
+          $ref: '#/components/schemas/PaymentStatus'
 
         createdAt:
           type: string
@@ -1323,7 +1328,6 @@ components:
       required:
         - pan
         - expiration
-        - cvv
         - email
         - name
 
@@ -1346,13 +1350,6 @@ components:
           maxLength: 4
           pattern: "^(0[1-9]|1[0-2])([0-9]{2})$"
 
-        CVV:
-          type: string
-          description: Трехзначный защитный код
-          minLength: 3
-          maxLength: 3
-          pattern: "^[0-9]{3}$"
-
         email:
           type: string
           description: Почта держателя карты
@@ -1371,14 +1368,6 @@ components:
       type: object
 
       properties:
-        success:
-          type: boolean
-          description: Успешно ли добавлена карта
-
-        message:
-          type: string
-          description: Сообщение пользователю
-
         email:
           type: string
           description: Почта держателя карты
@@ -1388,13 +1377,7 @@ components:
           description: Имя держателя карты
 
         status:
-          type: string
-          description: Информация о статусе заказа
-          enum:
-            - PENDING
-            - CARD_SAVED
-            - FULLY_PAID
-            - REFUNDED
+          $ref: '#/components/schemas/PaymentStatus'
 
         createdAt:
           type: string
@@ -1403,18 +1386,11 @@ components:
     CreateOrderRequest:
       type: object
       required:
-        - paymentMethod
         - recipientName
         - recipientPhone
         - deliveryAddress
 
       properties:
-        paymentMethod:
-          type: string
-          description: Информация о методе оплаты
-          enum:
-            - CARD
-
         deliveryAddress:
           type: string
           description: Информация об адресе доставки
@@ -1439,22 +1415,12 @@ components:
       type: object
 
       properties:
-        success:
-          type: boolean
-          description: Успешно ли создан заказ
-
         orderId:
           type: integer
           description: Идентификатор заказа
 
         status:
-          type: string
-          description: Информация о статусе заказа
-          enum:
-            - PENDING
-            - CARD_SAVED
-            - FULLY_PAID
-            - REFUNDED
+          $ref: '#/components/schemas/PaymentStatus'
 
         amount:
           type: string
@@ -1465,10 +1431,6 @@ components:
         createdAt:
           type: string
           format: date-time
-
-        message:
-          type: string
-          description: Сообщение для пользователя
 
     RefundResponse:
       type: object
@@ -1484,26 +1446,8 @@ components:
           type: integer
           description: Идентификатор заказа
 
-        reason:
-          type: string
-          description: Информация о причинах возврата
-
-        message:
-          type: string
-          description: Сообщение пользователю
-
-        success:
-          type: boolean
-          description: Успешно ли выполнен возврат
-
         status:
-          type: string
-          description: Информация о статусе заказа
-          enum:
-            - PENDING
-            - CARD_SAVED
-            - FULLY_PAID
-            - REFUNDED
+          $ref: '#/components/schemas/PaymentStatus'
 
     Publisher:
       type: object
