@@ -1,7 +1,7 @@
 plugins {
     id 'org.springframework.boot' version '3.2.5' apply false
     id 'io.spring.dependency-management' version '1.1.4' apply false
-    id 'org.openapi.generator' version '7.22.0'  apply false
+    id 'org.openapi.generator' version '7.22.0' apply false
 }
 
 allprojects {
@@ -50,5 +50,72 @@ subprojects {
     test {
         useJUnitPlatform()
     }
-
 }
+
+tasks.register('dockerComposeUp', Exec) {
+    group = 'docker'
+
+    workingDir = project.rootDir
+    commandLine 'docker-compose', 'up', '-d'
+}
+
+tasks.register('dockerComposeDown', Exec) {
+    group = 'docker'
+
+    workingDir = project.rootDir
+    commandLine 'docker-compose', 'down'
+}
+
+tasks.register('dockerComposeLogs', Exec) {    group = 'docker'
+
+    workingDir = project.rootDir
+    commandLine 'docker-compose', 'logs', '-f'
+}
+
+tasks.register('dockerComposeBuild', Exec) {    group = 'docker'
+    group = 'docker'
+
+    workingDir = project.rootDir
+    commandLine 'docker-compose', 'up', '-d', '--build'
+}
+
+tasks.register('dockerComposeStatus', Exec) {
+    group = 'docker'
+
+    workingDir = project.rootDir
+    commandLine 'docker-compose', 'ps'
+}
+
+tasks.register('dockerComposeRestart', Exec) {
+    group = 'docker'
+
+    workingDir = project.rootDir
+    commandLine 'docker-compose', 'restart'
+}
+
+tasks.register('dockerComposeDownVolumes', Exec) {
+    group = 'docker'
+
+    workingDir = project.rootDir
+    commandLine 'docker-compose', 'down', '-v'
+}
+
+tasks.register('dockerStatus') {
+    group = 'docker'
+    dependsOn dockerComposeStatus
+}
+
+tasks.register('dockerLogs') {
+        group = 'docker'
+        dependsOn dockerComposeLogs
+    }
+
+tasks.register('dockerStop') {
+    group = 'docker'
+    dependsOn dockerComposeDown
+}
+
+tasks.register('dockerClean') {
+        group = 'docker'
+        dependsOn dockerComposeDownVolumes
+    }

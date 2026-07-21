@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.openapi.generator'
+    id 'org.openapi.generator' version '7.22.0'
 }
 
 dependencies {
@@ -33,6 +33,8 @@ test {
     systemProperty "docker.client.version", "1.40"
     systemProperty "testcontainers.ignore.failures", "true"
 
+    jvmArgs '-XX:+EnableDynamicAgentLoading', '-Xshare:off'
+
     testLogging {
         showStandardStreams = true
         exceptionFormat = 'full'
@@ -43,13 +45,71 @@ tasks.named('bootRun') {
     mainClass.set("org.example.Main")
 }
 
-tasks.withType(Test).configureEach {
-    jvmArgs '-XX:+EnableDynamicAgentLoading'
+tasks.register('buildDockerImage', Exec) {
+    dependsOn bootJar
+    group = 'docker'
+    description = 'Build Docker image for bookstore-service'
+
+    def imageName = project.findProperty('dockerImageName') ?: 'bookstore-service'
+    def imageTag = project.findProperty('dockerImageTag') ?: 'latest'
+
+    workingDir = project.rootDir
+
+    commandLine 'docker', 'build',
+            '-f', 'bookstore-service/Dockerfile',
+            '-t', "${imageName}:${imageTag}",
+            '.'
 }
-test {
-    useJUnitPlatform()
-    jvmArgs '-XX:+EnableDynamicAgentLoading'
-    jvmArgs '-Xshare:off'
+
+tasks.register('pushDockerImage', Exec) {
+    dependsOn buildDockerImage
+    group = 'docker'
+    description = 'Push Docker image to registry'
+
+    def imageName = project.findProperty('dockerImageName') ?: 'bookstore-service'
+    def imageTag = project.findProperty('dockerImageTag') ?: 'latest'
+
+    commandLine 'docker', 'push', "${imageName}:${imageTag}"
+}
+
+tasks.register('buildAndPushDockerImage') {
+    dependsOn buildDockerImage, pushDockerImage
+    group = 'docker'
+}
+
+tasks.register('dockerComposeUp', Exec) {
+    group = 'docker'
+
+    workingDir = project.rootDir
+    commandLine 'docker-compose', 'up', '-d'
+}
+
+tasks.register('dockerComposeDown', Exec) {
+    group = 'docker'
+
+    workingDir = project.rootDir
+    commandLine 'docker-compose', 'down'
+}
+
+tasks.register('dockerComposeLogs', Exec) {
+    group = 'docker'
+
+    workingDir = project.rootDir
+    commandLine 'docker-compose', 'logs', '-f'
+}
+
+tasks.register('dockerComposeBuild', Exec) {
+    group = 'docker'
+
+    workingDir = project.rootDir
+    commandLine 'docker-compose', 'up', '-d', '--build'
+}
+
+tasks.register('dockerComposeStatus', Exec) {
+    group = 'docker'
+
+    workingDir = project.rootDir
+    commandLine 'docker-compose', 'ps'
 }
 
 openApiGenerate {

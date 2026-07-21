@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/mydb
-    username: pgadmin
-    password: pgadmin
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/mydb}
+    username: ${SPRING_DATASOURCE_USERNAME:pgadmin}
+    password: ${SPRING_DATASOURCE_PASSWORD:pgadmin}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -14,7 +14,7 @@ spring:
 
     show-sql: true
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:mySecretKey123456789012345678901234567890}
 
 payment:
   order:

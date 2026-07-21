@@ -1,0 +1,54 @@
+services:
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: bookstore-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    networks:
+      - bookstore-network
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    container_name: my-postgres
+    environment:
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:-pgadmin}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-pgadmin}
+      POSTGRES_DB: ${SPRING_DATASOURCE_DB_NAME:-mydb}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./bookstore-service/db/schemaCreate.sql:/docker-entrypoint-initdb.d/01-schemaCreate.sql
+      - ./bookstore-service/db/schemaInsert.sql:/docker-entrypoint-initdb.d/02-schemaInsert.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pgadmin -d mydb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bookstore-network
+
+  bookstore-service:
+    image: bookstore-service:latest
+    container_name: bookstore-service
+    ports:
+      - "8081:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${SPRING_DATASOURCE_DB_NAME:-mydb}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-pgadmin}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-pgadmin}
+      JWT_SECRET: ${JWT_SECRET:-mySecretKey123456789012345678901234567890}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - bookstore-network
+
+networks:
+  bookstore-network:
+    driver: bridge
