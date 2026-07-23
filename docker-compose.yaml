@@ -37,7 +37,7 @@ services:
     image: bookstore-service:latest
     container_name: bookstore-service
     ports:
-      - "8081:8080"
+      - "8085:8081"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${SPRING_DATASOURCE_DB_NAME:-mydb}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-pgadmin}
